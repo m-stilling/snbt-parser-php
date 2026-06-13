@@ -17,7 +17,7 @@ class CompoundKeyToken extends Token {
 	}
 
 	public function satisfiesConstraints(string $token): int {
-		preg_match("/^ *(\"([^\"]+)\"|([a-zA-Z0-9_.+-]+)):/", $token, $matches);
+		preg_match("/^\s*(\"([^\"]+)\"|([a-zA-Z0-9_.+-]+)):/", $token, $matches);
 
 		if (!isset($matches[2])) {
 			return 0;

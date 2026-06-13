@@ -25,7 +25,7 @@ class StringToken extends Token {
 
 			if ($encapsulatingChar === "") {
 				// Still looking for the opening quote or apostrophe, skip any leading whitespace
-				if ($char === " ") {
+				if (mb_trim($char) === "") {
 					continue;
 				}
 

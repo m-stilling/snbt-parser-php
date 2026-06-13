@@ -32,7 +32,7 @@ class NumberArrayToken extends Token {
 			return 0;
 		}
 
-		$partsString = str_replace(" ", "", $partsString);
+		$partsString = preg_replace('/\s+/', '', $partsString);
 
 		$this->value = $partsString === ""
 			? []
