@@ -15,8 +15,7 @@
 		"source": "https://github.com/m-stilling/snbt-parser-php"
 	},
 	"require": {
-		"php": "^8.4",
-		"ext-mbstring": "*"
+		"php": "^8.4"
 	},
 	"require-dev": {
 		"pestphp/pest": "^4.0",
