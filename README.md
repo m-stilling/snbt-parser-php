@@ -61,3 +61,15 @@ SNBTParser::parse('{z: -11, x: -40, id: "minecraft:chest", y: 73, Items: [{count
     ],
 ]
 ```
+
+## Converting UUIDs
+
+Minecraft stores UUIDs as four-integer arrays (e.g. `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`). Once parsed, pass that array to `intsToUuid()` to get the canonical string form:
+
+```php
+use Stilling\SNBTParser\SNBTParser;
+
+SNBTParser::intsToUuid([110787060, 1156138790, -1514210135, 238594805]);
+
+// returns -> "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+```
