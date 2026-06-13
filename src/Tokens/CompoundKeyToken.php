@@ -17,13 +17,11 @@ class CompoundKeyToken extends Token {
 	}
 
 	public function satisfiesConstraints(string $token): int {
-		preg_match("/^\s*(\"([^\"]+)\"|([a-zA-Z0-9_.+-]+)):/", $token, $matches);
-
-		if (!isset($matches[2])) {
+		if (preg_match("/^\s*(\"([^\"]+)\"|([a-zA-Z0-9_.+-]+)):/", $token, $matches) !== 1) {
 			return 0;
 		}
 
-		$this->key = $matches[2] ?: ($matches[3] ?? "");
+		$this->key = ($matches[2] ?? "") ?: ($matches[3] ?? "");
 
 		return mb_strlen($matches[0]);
 	}
