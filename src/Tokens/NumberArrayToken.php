@@ -32,8 +32,11 @@ class NumberArrayToken extends Token {
 			return 0;
 		}
 
-		$parts = explode(",", str_replace(" ", "", $partsString));
-		$this->value = array_map(fn ($part) => (int) $part, $parts);
+		$partsString = str_replace(" ", "", $partsString);
+
+		$this->value = $partsString === ""
+			? []
+			: array_map(fn ($part) => (int) $part, explode(",", $partsString));
 
 		return mb_strlen($token) - mb_strlen($trimmedToken);
 	}

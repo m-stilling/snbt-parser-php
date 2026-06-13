@@ -236,3 +236,11 @@ test("long array", function () {
 	expect(SNBTParser::parse("[L;1l,2l,3l]"))->toEqual([1, 2, 3])
 		->and(SNBTParser::parse("[L;1b,2s,3i,4l] "))->toEqual([1, 2, 3, 4]);
 });
+
+test("empty typed array", function () {
+	expect(SNBTParser::parse("[B;]"))->toEqual([])
+		->and(SNBTParser::parse("[I;]"))->toEqual([])
+		->and(SNBTParser::parse("[L;]"))->toEqual([])
+		->and(SNBTParser::parse("[I; ]"))->toEqual([])
+		->and(SNBTParser::parse("{ ids: [I;] }"))->toEqual([ "ids" => [] ]);
+});
