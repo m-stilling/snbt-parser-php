@@ -57,6 +57,14 @@ test("double", function () {
 	}
 });
 
+test("preserves float and double precision", function () {
+	// The full IEEE 754 value must survive, not a 14-digit rounded copy.
+	expect(SNBTParser::parse("0.10000000149011612d"))->toBe(0.10000000149011612)
+		->and(SNBTParser::parse("0.6000000238418579d"))->toBe(0.6000000238418579)
+		->and(SNBTParser::parse("-0.0784000015258789d"))->toBe(-0.0784000015258789)
+		->and(SNBTParser::parse("3.141592653589793f"))->toBe(3.141592653589793);
+});
+
 test("string", function () {
 	expect(SNBTParser::parse("'single'"))->toEqual("single")
 		->and(SNBTParser::parse('"double"'))->toEqual("double");
@@ -204,7 +212,7 @@ test("large compound", function () {
 		"HurtByTimestamp" => 0,
 		"attributes" => [
 			[
-				"base" => 0.10000000149012, // 0.10000000149011612 gets rounded to 0.10000000149012
+				"base" => 0.10000000149011612,
 				"id" => "minecraft:movement_speed",
 			],
 			[
@@ -216,7 +224,7 @@ test("large compound", function () {
 				"id" => "minecraft:block_interaction_range",
 			],
 			[
-				"base" => 0.60000002384186, // 0.6000000238418579 gets rounded to 0.60000002384186
+				"base" => 0.6000000238418579,
 				"id" => "minecraft:step_height",
 			],
 		],
@@ -245,7 +253,7 @@ test("large compound", function () {
 		"foodLevel" => 19,
 		"Motion" => [
 			0,
-			-0.078400001525879, // -0.0784000015258789 gets rounded to -0.078400001525879
+			-0.0784000015258789,
 			0,
 		],
 		"DataVersion" => 4325,

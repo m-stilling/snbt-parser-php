@@ -28,7 +28,10 @@ class NumberToken extends Token {
 	}
 
 	public function toJsonToken(): string {
-		return "{$this->value}";
+		// json_encode honours serialize_precision (-1 by default), emitting the
+		// shortest representation that round-trips to the same value, rather than
+		// the lossy 14-digit string interpolation would produce.
+		return json_encode($this->value);
 	}
 
 	public function parseNbtPrimitive(string $input): ?array {
