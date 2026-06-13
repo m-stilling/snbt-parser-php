@@ -118,6 +118,14 @@ test("compound", function () {
 		->and(SNBTParser::parse('{ "test": 1 }'))->toEqual(["test" => 1]);
 });
 
+test("compound with extra key characters", function () {
+	// Unquoted keys may contain dots, dashes and plus signs.
+	expect(SNBTParser::parse("{ some.key: 1 }"))->toEqual([ "some.key" => 1 ])
+		->and(SNBTParser::parse("{ a-b: 2 }"))->toEqual([ "a-b" => 2 ])
+		->and(SNBTParser::parse("{ c+d: 3 }"))->toEqual([ "c+d" => 3 ])
+		->and(SNBTParser::parse("{ a.b-c+d_e: 4 }"))->toEqual([ "a.b-c+d_e" => 4 ]);
+});
+
 test("large compound", function () {
 	$snbt = <<<SNBT
 		{seenCredits: 0b, DeathTime: 0s, foodTickTimer: 0, recipeBook: {recipes: [], isGuiOpen: 0b, toBeDisplayed: [], isSmokerGuiOpen: 0b, isFurnaceFilteringCraftable: 0b, isFurnaceGuiOpen: 0b, isBlastingFurnaceFilteringCraftable: 0b, isBlastingFurnaceGuiOpen: 0b, isFilteringCraftable: 0b, isSmokerFilteringCraftable: 0b}, XpTotal: 0, OnGround: 1b, AbsorptionAmount: 0.0f, spawn_extra_particles_on_fall: 0b, playerGameType: 1, Invulnerable: 0b, SelectedItemSlot: 0, Brain: {memories: {}}, Dimension: "minecraft:overworld", abilities: {walkSpeed: 0.1f, instabuild: 1b, flying: 0b, flySpeed: 0.05f, mayfly: 1b, invulnerable: 1b, mayBuild: 1b}, Score: 0, Rotation: [0.0f, 0.0f], HurtByTimestamp: 0, attributes: [{base: 0.10000000149011612d, id: "minecraft:movement_speed"}, {base: 3.0d, id: "minecraft:entity_interaction_range"}, {base: 4.5d, id: "minecraft:block_interaction_range"}, {base: 0.6000000238418579d, id: "minecraft:step_height"}], foodSaturationLevel: 0.0f, fall_distance: 0.0d, SelectedItem: {id: "minecraft:lead", count: 1}, Air: 300s, warden_spawn_tracker: {ticks_since_last_warning: 10639, cooldown_ticks: 0, warning_level: 0}, XpSeed: 174870856, EnderItems: [], UUID: [I;110787060,1156138790,-1514210135,238594805], XpLevel: 0, Inventory: [{count: 1, Slot: 0b, id: "minecraft:lead"}], foodLevel: 19, Motion: [0.0d, -0.0784000015258789d, 0.0d], DataVersion: 4325, SleepTimer: 0s, XpP: 0.0f, current_impulse_context_reset_grace_time: 0, equipment: {}, Pos: [-78.5d, 65.0d, -19.5d], Health: 20.0f, HurtTime: 0s, FallFlying: 0b, Fire: 0s, ignore_fall_damage_from_current_explosion: 0b, PortalCooldown: 0, foodExhaustionLevel: 2.2999997f}
