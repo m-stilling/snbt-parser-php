@@ -8,8 +8,11 @@ Turn [Minecraft SNBT](https://minecraft.wiki/w/NBT_format#SNBT_format) data into
 composer require stilling/snbt-parser
 ```
 
+> [!TIP]
+> Need to fetch this data from a server first? [`stilling/minecraft-rcon`](https://packagist.org/packages/stilling/minecraft-rcon) is a lightweight Minecraft RCON client that handles multi-packet responses - run commands like `data get ...` and feed the output straight into this parser.
+
 > [!NOTE]
-> Under the hood this package transposes the SNBT to JSON and decodes it with `json_decode()`. Numeric values keep their full precision, but the NBT type suffixes are not retained — every integer type (`b`/`s`/`i`/`l`) becomes a PHP `int` and every floating-point type (`f`/`d`) becomes a PHP `float`. A potential v2 may parse SNBT directly to preserve type information and skip the JSON round-trip.
+> Under the hood this package transposes the SNBT to JSON and decodes it with `json_decode()`. Numeric values keep their full precision, but the NBT type suffixes are not retained - every integer type (`b`/`s`/`i`/`l`) becomes a PHP `int` and every floating-point type (`f`/`d`) becomes a PHP `float`. A potential v2 may parse SNBT directly to preserve type information and skip the JSON round-trip.
 
 Here's an example parsing the SNBT data of a chest using the following command: `data get block -40 73 -11`
 
