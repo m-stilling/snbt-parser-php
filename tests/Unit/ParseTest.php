@@ -53,7 +53,7 @@ test("double", function () {
 	foreach ([0.0, 1.79, -1.79, 123456.789, -987654.321] as $number) {
 		expect(SNBTParser::parse($number . "d"))->toEqual($number)
 			->and(SNBTParser::parse($number . "D"))->toEqual($number)
-			->and(SNBTParser::parse($number))->toEqual($number);
+			->and(SNBTParser::parse((string) $number))->toEqual($number);
 	}
 });
 
