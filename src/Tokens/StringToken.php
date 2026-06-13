@@ -23,12 +23,11 @@ class StringToken extends Token {
 		for ($i = 0; $i < mb_strlen($token); $i++) {
 			$char = mb_substr($token, $i, 1);
 
-			if ($char === " ") {
-				continue;
-			}
-
 			if ($encapsulatingChar === "") {
-				// Still looking for the opening quote or apostrophe
+				// Still looking for the opening quote or apostrophe, skip any leading whitespace
+				if ($char === " ") {
+					continue;
+				}
 
 				if ($char === "\"" || $char === "'") {
 					$encapsulatingChar = $char;

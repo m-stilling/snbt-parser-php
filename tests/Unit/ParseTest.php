@@ -61,6 +61,15 @@ test("string", function () {
 		->and(SNBTParser::parse('"double"'))->toEqual("double");
 });
 
+test("string with spaces", function () {
+	expect(SNBTParser::parse('"hello world"'))->toEqual("hello world")
+		->and(SNBTParser::parse("'hello world'"))->toEqual("hello world")
+		->and(SNBTParser::parse('"a b c"'))->toEqual("a b c")
+		->and(SNBTParser::parse('"  leading and trailing  "'))->toEqual("  leading and trailing  ")
+		->and(SNBTParser::parse('{ msg: "a b c" }'))->toEqual([ "msg" => "a b c" ])
+		->and(SNBTParser::parse('[ "a b", "c d" ]'))->toEqual([ "a b", "c d" ]);
+});
+
 test("list", function () {
 	expect(SNBTParser::parse("[]"))->toEqual([]);
 });
