@@ -4,6 +4,16 @@
 	"description": "Turn Minecraft SNBT data into the corresponding PHP data types.",
 	"keywords": ["minecraft", "snbt", "nbt"],
 	"license": "MIT",
+	"authors": [
+		{
+			"name": "Michael Stilling",
+			"email": "git@stilling.dev"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/m-stilling/snbt-parser-php/issues",
+		"source": "https://github.com/m-stilling/snbt-parser-php"
+	},
 	"require": {
 		"php": "^8.4",
 		"ext-mbstring": "*"
