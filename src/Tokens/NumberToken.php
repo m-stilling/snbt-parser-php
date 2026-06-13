@@ -60,9 +60,9 @@ class NumberToken extends Token {
 			'i' => [ (int) $value, 'TAG_Int', $length ],
 			'l' => [ (int) $value, 'TAG_Long', $length ],
 			'f' => [ (float) $value, 'TAG_Float', $length ],
-			'd' => [ (double) $value, 'TAG_Double', $length ],
+			'd' => [ (float) $value, 'TAG_Double', $length ],
 			'' => match(str_contains($value, '.')) {
-				true => [ (double) $value, 'TAG_Double', $length ],
+				true => [ (float) $value, 'TAG_Double', $length ],
 				false => [ (int) $value, 'TAG_Int', $length ],
 			},
 			default => throw new \InvalidArgumentException("Unknown suffix: $suffix"),
