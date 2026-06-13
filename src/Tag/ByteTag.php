@@ -1,0 +1,9 @@
+<?php
+
+namespace Stilling\SNBTParser\Tag;
+
+final class ByteTag extends IntegerTag {
+	public function toSnbt(): string {
+		return $this->value . "b";
+	}
+}
