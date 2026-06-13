@@ -9,7 +9,7 @@ composer require stilling/snbt-parser
 ```
 
 > [!NOTE]
-> Technically, this package transposes the SNBT data to JSON and parses that using `json_decode()`, which may not be too performant. A potential v2 may parse SNBT directly.
+> Under the hood this package transposes the SNBT to JSON and decodes it with `json_decode()`. Numeric values keep their full precision, but the NBT type suffixes are not retained — every integer type (`b`/`s`/`i`/`l`) becomes a PHP `int` and every floating-point type (`f`/`d`) becomes a PHP `float`. A potential v2 may parse SNBT directly to preserve type information and skip the JSON round-trip.
 
 Here's an example parsing the SNBT data of a chest using the following command: `data get block -40 73 -11`
 
