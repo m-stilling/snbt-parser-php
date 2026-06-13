@@ -38,9 +38,10 @@ class StringToken extends Token {
 				}
 			}
 
-			$pulledCharsArray = mb_str_split($pulledChars);
-
-			if ($char === $encapsulatingChar && end($pulledCharsArray) !== "\\") {
+			// The quote only closes the string when it is not escaped. A run of
+			// backslashes escapes the quote only when its length is odd, since each
+			// pair collapses to a single literal backslash.
+			if ($char === $encapsulatingChar && $this->countTrailingBackslashes($pulledChars) % 2 === 0) {
 				$this->value = $this->unescape($pulledChars, $encapsulatingChar);
 				return $i + 1;
 			}
@@ -49,6 +50,20 @@ class StringToken extends Token {
 		}
 
 		return 0;
+	}
+
+	protected function countTrailingBackslashes(string $value): int {
+		$count = 0;
+
+		for ($i = mb_strlen($value) - 1; $i >= 0; $i--) {
+			if (mb_substr($value, $i, 1) !== "\\") {
+				break;
+			}
+
+			$count++;
+		}
+
+		return $count;
 	}
 
 	/**

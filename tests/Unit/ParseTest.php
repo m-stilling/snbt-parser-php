@@ -86,6 +86,16 @@ test("string with quotes", function () {
 		->and(SNBTParser::parse($nestedList))->toEqual([ 'a "b"', "c 'd'" ]);
 });
 
+test("string ending in backslash", function () {
+	// A trailing escaped backslash must not be mistaken for an escaped closing quote.
+	expect(SNBTParser::parse('"a\\\\"'))->toEqual('a\\')
+		->and(SNBTParser::parse("'a\\\\'"))->toEqual('a\\')
+		->and(SNBTParser::parse('"a\\\\\\\\"'))->toEqual('a\\\\')
+		// An escaped quote followed by the real closing quote still resolves correctly.
+		->and(SNBTParser::parse('"a\\\\\\""'))->toEqual('a\\"')
+		->and(SNBTParser::parse('{ path: "C:\\\\" }'))->toEqual([ "path" => 'C:\\' ]);
+});
+
 test("string with special characters", function () {
 	// Real control characters and backslashes must be escaped to stay valid JSON.
 	expect(SNBTParser::parse("\"tab\there\""))->toEqual("tab\there")
