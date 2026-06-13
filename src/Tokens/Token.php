@@ -2,6 +2,8 @@
 
 namespace Stilling\SNBTParser\Tokens;
 
+use Stilling\SNBTParser\Exceptions\SNBTParseException;
+
 abstract class Token {
 	/**
 	 * @return class-string<Token>[]
@@ -30,6 +32,6 @@ abstract class Token {
 			$remainingSnippet .= " <snip>";
 		}
 
-		throw new \Exception("No possible neighbor token found in $currentTokenName for \"$remainingSnippet\", the SNBT may be invalid or malformed.");
+		throw new SNBTParseException("No possible neighbor token found in $currentTokenName for \"$remainingSnippet\", the SNBT may be invalid or malformed.");
 	}
 }

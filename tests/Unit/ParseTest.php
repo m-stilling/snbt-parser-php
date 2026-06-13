@@ -1,5 +1,6 @@
 <?php
 
+use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\SNBTParser;
 
 test("boolean", function () {
@@ -283,4 +284,12 @@ test("empty typed array", function () {
 		->and(SNBTParser::parse("[L;]"))->toEqual([])
 		->and(SNBTParser::parse("[I; ]"))->toEqual([])
 		->and(SNBTParser::parse("{ ids: [I;] }"))->toEqual([ "ids" => [] ]);
+});
+
+test("malformed input throws", function () {
+	// Empty input fails when decoding the (empty) transposed JSON.
+	expect(fn () => SNBTParser::parse(""))->toThrow(SNBTParseException::class)
+		// Unrecognisable input fails while walking the token chain.
+		->and(fn () => SNBTParser::parse("@invalid"))->toThrow(SNBTParseException::class)
+		->and(fn () => SNBTParser::parse("{ a: }"))->toThrow(SNBTParseException::class);
 });

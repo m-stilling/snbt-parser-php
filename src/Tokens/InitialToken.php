@@ -15,10 +15,10 @@ class InitialToken extends Token {
 	}
 
 	public function satisfiesConstraints(string $token): int {
-		throw new \Exception("Not implemented.");
+		throw new \LogicException("Not implemented.");
 	}
 
 	public function toJsonToken(): string {
-		throw new \Exception("Not implemented.");
+		throw new \LogicException("Not implemented.");
 	}
 }

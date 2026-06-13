@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser;
 
+use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\Tokens\InitialToken;
 use Stilling\SNBTParser\Tokens\Token;
 
@@ -11,7 +12,7 @@ class SNBTParser {
 		$array = json_decode($json, true);
 
 		if (json_last_error() !== JSON_ERROR_NONE) {
-			throw new \Exception("SNBT is malformed, failed to decode JSON: " . json_last_error_msg());
+			throw new SNBTParseException("SNBT is malformed, failed to decode JSON: " . json_last_error_msg());
 		}
 
 		return $array;
@@ -43,7 +44,7 @@ class SNBTParser {
 	/**
 	 * @param string $snbt
 	 * @return string
-	 * @throws \Exception
+	 * @throws SNBTParseException
 	 */
 	protected static function readSNBT(string $snbt): string {
 		$json = "";
@@ -58,7 +59,7 @@ class SNBTParser {
 				|| !isset($remainingSNBT)
 				|| !is_string($remainingSNBT)
 			) {
-				throw new \Exception("Invalid parseNextToken result");
+				throw new \LogicException("Invalid parseNextToken result");
 			}
 
 			$json .= $nextToken->toJsonToken();
