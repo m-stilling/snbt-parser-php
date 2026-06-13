@@ -70,6 +70,31 @@ test("string with spaces", function () {
 		->and(SNBTParser::parse('[ "a b", "c d" ]'))->toEqual([ "a b", "c d" ]);
 });
 
+test("string with quotes", function () {
+	// A single-quoted string may contain unescaped double quotes, and vice versa.
+	$nestedList = <<<'SNBT'
+		[ 'a "b"', "c 'd'" ]
+		SNBT;
+
+	expect(SNBTParser::parse('\'he said "hi"\''))->toEqual('he said "hi"')
+		->and(SNBTParser::parse("\"it's fine\""))->toEqual("it's fine")
+		// Escaped copies of the encapsulating quote are resolved to a literal quote.
+		->and(SNBTParser::parse('"he said \\"hi\\""'))->toEqual('he said "hi"')
+		->and(SNBTParser::parse("'it\\'s fine'"))->toEqual("it's fine")
+		// Embedded quotes survive when nested in compounds and lists.
+		->and(SNBTParser::parse('{ msg: \'say "hi"\' }'))->toEqual([ "msg" => 'say "hi"' ])
+		->and(SNBTParser::parse($nestedList))->toEqual([ 'a "b"', "c 'd'" ]);
+});
+
+test("string with special characters", function () {
+	// Real control characters and backslashes must be escaped to stay valid JSON.
+	expect(SNBTParser::parse("\"tab\there\""))->toEqual("tab\there")
+		->and(SNBTParser::parse("\"line1\nline2\""))->toEqual("line1\nline2")
+		->and(SNBTParser::parse('"back\\\\slash"'))->toEqual('back\\slash')
+		->and(SNBTParser::parse('"url: https://example.com/path"'))->toEqual("url: https://example.com/path")
+		->and(SNBTParser::parse('"café"'))->toEqual("café");
+});
+
 test("list", function () {
 	expect(SNBTParser::parse("[]"))->toEqual([]);
 });
