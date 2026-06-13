@@ -16,11 +16,13 @@ class NumberToken extends Token {
 	public function satisfiesConstraints(string $token): int {
 		$trimmedToken = mb_trim($token);
 
-		[ $number, $tagType, $length ] = $this->parseNbtPrimitive($trimmedToken);
+		$primitive = $this->parseNbtPrimitive($trimmedToken);
 
-		if ($number === null) {
+		if ($primitive === null) {
 			return 0;
 		}
+
+		[ $number, $tagType, $length ] = $primitive;
 
 		$this->value = $number;
 
@@ -31,9 +33,12 @@ class NumberToken extends Token {
 		// json_encode honours serialize_precision (-1 by default), emitting the
 		// shortest representation that round-trips to the same value, rather than
 		// the lossy 14-digit string interpolation would produce.
-		return json_encode($this->value);
+		return json_encode($this->value, JSON_THROW_ON_ERROR);
 	}
 
+	/**
+	 * @return array{int|float, string, int}|null
+	 */
 	public function parseNbtPrimitive(string $input): ?array {
 		// Match pattern: optional minus, digits, optional decimal, optional suffix
 		if (!preg_match('/^(-?\d+(?:\.\d+)?)([bBsSiIlLfFdD]?)/', $input, $matches)) {

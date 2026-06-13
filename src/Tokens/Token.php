@@ -14,6 +14,9 @@ abstract class Token {
 
 	abstract public function toJsonToken(): string;
 
+	/**
+	 * @return array{Token, string}
+	 */
 	public function parseNextToken(string $remaining): array {
 		foreach ($this->getPossibleNeighbors() as $neighborFQN) {
 			$neighbor = new $neighborFQN();

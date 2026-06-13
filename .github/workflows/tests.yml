@@ -9,6 +9,7 @@ on:
       - 'tests/**'
       - 'composer.json'
       - 'composer.lock'
+      - 'phpstan.neon'
   pull_request:
     branches: [ "main" ]
     paths:
@@ -17,6 +18,7 @@ on:
       - 'tests/**'
       - 'composer.json'
       - 'composer.lock'
+      - 'phpstan.neon'
 
 permissions:
   contents: read
@@ -46,6 +48,9 @@ jobs:
 
       - name: Install dependencies
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --ansi
+
+      - name: Run static analysis
+        run: ./vendor/bin/phpstan analyse --no-progress
 
       - name: Run tests
         run: ./vendor/bin/pest

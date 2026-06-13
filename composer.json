@@ -9,7 +9,8 @@
 		"ext-mbstring": "*"
 	},
 	"require-dev": {
-		"pestphp/pest": "^4.0"
+		"pestphp/pest": "^4.0",
+		"phpstan/phpstan": "^2.0"
 	},
 	"autoload": {
 		"psr-4": {
@@ -22,7 +23,8 @@
 		}
 	},
 	"scripts": {
-		"test": "pest"
+		"test": "pest",
+		"analyse": "phpstan analyse"
 	},
 	"config": {
 		"allow-plugins": {

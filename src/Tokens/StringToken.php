@@ -95,6 +95,6 @@ class StringToken extends Token {
 	}
 
 	public function toJsonToken(): string {
-		return json_encode($this->value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		return json_encode($this->value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 	}
 }

@@ -3,6 +3,7 @@
 namespace Stilling\SNBTParser\Tokens;
 
 class NumberArrayToken extends Token {
+	/** @var list<int> */
 	protected array $value;
 
 	public function getPossibleNeighbors(): array {
@@ -25,23 +26,25 @@ class NumberArrayToken extends Token {
 		}
 
 		$trimmedToken = mb_trim(mb_substr($trimmedToken, 3));
-		$partsString = mb_strstr($trimmedToken, "]", true);
-		$trimmedToken = mb_substr(mb_strstr($trimmedToken, "]"), 1);
+		$closePosition = mb_strpos($trimmedToken, "]");
 
-		if ($partsString === false) {
+		if ($closePosition === false) {
 			return 0;
 		}
 
-		$partsString = preg_replace('/\s+/', '', $partsString);
+		$partsString = mb_substr($trimmedToken, 0, $closePosition);
+		$trimmedToken = mb_substr($trimmedToken, $closePosition + 1);
+
+		$partsString = preg_replace('/\s+/', '', $partsString) ?? "";
 
 		$this->value = $partsString === ""
 			? []
-			: array_map(fn ($part) => (int) $part, explode(",", $partsString));
+			: array_map(static fn (string $part): int => (int) $part, explode(",", $partsString));
 
 		return mb_strlen($token) - mb_strlen($trimmedToken);
 	}
 
 	public function toJsonToken(): string {
-		return json_encode($this->value);
+		return json_encode($this->value, JSON_THROW_ON_ERROR);
 	}
 }

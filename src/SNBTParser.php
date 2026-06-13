@@ -4,9 +4,11 @@ namespace Stilling\SNBTParser;
 
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\Tokens\InitialToken;
-use Stilling\SNBTParser\Tokens\Token;
 
 class SNBTParser {
+	/**
+	 * @return array<mixed>|float|int|string|bool
+	 */
 	public static function parse(string $input): array|float|int|string|object|bool {
 		$json = static::readSNBT(mb_trim($input));
 		$array = json_decode($json, true);
@@ -18,6 +20,9 @@ class SNBTParser {
 		return $array;
 	}
 
+	/**
+	 * @param list<int|string> $ints
+	 */
 	public static function intsToUuid(array $ints): string {
 		if (count($ints) !== 4) {
 			throw new \InvalidArgumentException("Array must contain exactly 4 integers.");
@@ -29,7 +34,7 @@ class SNBTParser {
 			}
 		}
 
-		$bytes = pack("NNNN", $ints[0], $ints[1], $ints[2], $ints[3]);
+		$bytes = pack("NNNN", ...$ints);
 		$hex = bin2hex($bytes);
 
 		return implode("-", [
@@ -52,15 +57,6 @@ class SNBTParser {
 
 		while (mb_strlen($snbt) > 0) {
 			[ $nextToken, $remainingSNBT ] = $currentToken->parseNextToken($snbt);
-
-			if (
-				!isset($nextToken)
-				|| !($nextToken instanceof Token)
-				|| !isset($remainingSNBT)
-				|| !is_string($remainingSNBT)
-			) {
-				throw new \LogicException("Invalid parseNextToken result");
-			}
 
 			$json .= $nextToken->toJsonToken();
 			$snbt = $remainingSNBT;

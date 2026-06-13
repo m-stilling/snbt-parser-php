@@ -23,7 +23,7 @@ class CompoundKeyToken extends Token {
 			return 0;
 		}
 
-		$this->key = $matches[2] ?: $matches[3];
+		$this->key = $matches[2] ?: ($matches[3] ?? "");
 
 		return mb_strlen($matches[0]);
 	}
