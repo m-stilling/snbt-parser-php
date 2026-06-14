@@ -344,8 +344,73 @@ class Parser {
 			"n" => "\n",
 			"r" => "\r",
 			"t" => "\t",
+			"u" => $this->readUnicodeEscape(),
 			default => throw $this->error("Invalid escape sequence \"\\{$char}\""),
 		};
+	}
+
+	/**
+	 * Read a `\uXXXX` escape (the leading "\u" is already consumed), combining a
+	 * high/low surrogate pair into a single astral-plane code point, and return
+	 * its UTF-8 encoding.
+	 */
+	protected function readUnicodeEscape(): string {
+		$high = $this->readHexCodepoint();
+
+		if ($high >= 0xD800 && $high <= 0xDBFF) {
+			if (substr($this->input, $this->position, 2) !== "\\u") {
+				throw $this->error("Expected a low surrogate after a high surrogate");
+			}
+
+			$this->position += 2; // consume the paired "\u"
+			$low = $this->readHexCodepoint();
+
+			if ($low < 0xDC00 || $low > 0xDFFF) {
+				throw $this->error("Invalid low surrogate in \\u escape sequence");
+			}
+
+			return $this->encodeUtf8(0x10000 + (($high - 0xD800) << 10) + ($low - 0xDC00));
+		}
+
+		if ($high >= 0xDC00 && $high <= 0xDFFF) {
+			throw $this->error("Unexpected low surrogate in \\u escape sequence");
+		}
+
+		return $this->encodeUtf8($high);
+	}
+
+	protected function readHexCodepoint(): int {
+		$hex = substr($this->input, $this->position, 4);
+
+		if (preg_match('/^[0-9A-Fa-f]{4}$/', $hex) !== 1) {
+			throw $this->error("Invalid \\u escape sequence");
+		}
+
+		$this->position += 4;
+
+		return intval($hex, 16);
+	}
+
+	protected function encodeUtf8(int $codepoint): string {
+		if ($codepoint < 0x80) {
+			return chr($codepoint);
+		}
+
+		if ($codepoint < 0x800) {
+			return chr(0xC0 | ($codepoint >> 6))
+				. chr(0x80 | ($codepoint & 0x3F));
+		}
+
+		if ($codepoint < 0x10000) {
+			return chr(0xE0 | ($codepoint >> 12))
+				. chr(0x80 | (($codepoint >> 6) & 0x3F))
+				. chr(0x80 | ($codepoint & 0x3F));
+		}
+
+		return chr(0xF0 | ($codepoint >> 18))
+			. chr(0x80 | (($codepoint >> 12) & 0x3F))
+			. chr(0x80 | (($codepoint >> 6) & 0x3F))
+			. chr(0x80 | ($codepoint & 0x3F));
 	}
 
 	protected function isLiteralChar(string $char): bool {
