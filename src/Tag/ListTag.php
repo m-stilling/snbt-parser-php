@@ -2,6 +2,8 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\ESnbtFormat;
+
 /**
  * An ordered list of tags (`[...]`). NBT lists are homogeneous; this parser does
  * not enforce that, leaving validation to the caller.
@@ -20,7 +22,15 @@ class ListTag extends Tag {
 		return array_map(fn (Tag $item): array|int|float|string|bool => $item->toPhp(), $this->items);
 	}
 
-	public function toSnbt(): string {
-		return "[" . implode(",", array_map(fn (Tag $item): string => $item->toSnbt(), $this->items)) . "]";
+	protected function render(ESnbtFormat $format, int $depth): string {
+		if ($this->items === []) {
+			return "[]";
+		}
+
+		$items = array_map(fn (Tag $item): string => $item->render($format, $depth + 1), $this->items);
+
+		return "[" . $format->afterOpen($depth)
+			. implode($format->itemSeparator($depth), $items)
+			. $format->beforeClose($depth) . "]";
 	}
 }

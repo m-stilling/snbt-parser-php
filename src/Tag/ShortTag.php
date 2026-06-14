@@ -2,8 +2,10 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\ESnbtFormat;
+
 class ShortTag extends IntegerTag {
-	public function toSnbt(): string {
+	protected function render(ESnbtFormat $format, int $depth): string {
 		return $this->value . "s";
 	}
 }

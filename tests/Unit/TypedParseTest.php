@@ -12,6 +12,7 @@ use Stilling\SNBTParser\Tag\IntTag;
 use Stilling\SNBTParser\Tag\ListTag;
 use Stilling\SNBTParser\Tag\LongArrayTag;
 use Stilling\SNBTParser\Tag\LongTag;
+use Stilling\SNBTParser\ESnbtFormat;
 use Stilling\SNBTParser\Tag\ShortTag;
 use Stilling\SNBTParser\Tag\StringTag;
 
@@ -121,6 +122,33 @@ test("keeps the decimal point on whole floats and doubles", function () {
 		->and(SNBTParser::parseTyped("1f")->toSnbt())->toBe("1.0f")
 		->and(SNBTParser::parseTyped("65.0d")->toSnbt())->toBe("65.0d")
 		->and(SNBTParser::parseTyped("-19.5d")->toSnbt())->toBe("-19.5d");
+});
+
+test("formats output as compact, spaced or pretty", function () {
+	$tag = SNBTParser::parseTyped('{a:1b,ids:[I;1,2],nested:{c:true}}');
+
+	expect($tag->toSnbt())->toBe('{a:1b,ids:[I;1,2],nested:{c:true}}')
+		->and($tag->toSnbt(ESnbtFormat::Compact))->toBe('{a:1b,ids:[I;1,2],nested:{c:true}}')
+		->and($tag->toSnbt(ESnbtFormat::Spaced))->toBe('{a: 1b, ids: [I; 1, 2], nested: {c: true}}')
+		->and($tag->toSnbt(ESnbtFormat::Pretty))->toBe(
+			"{\n    a: 1b,\n    ids: [I; 1, 2],\n    nested: {\n        c: true\n    }\n}"
+		);
+});
+
+test("empty containers stay inline in every format", function () {
+	foreach ([ESnbtFormat::Compact, ESnbtFormat::Spaced, ESnbtFormat::Pretty] as $format) {
+		expect(SNBTParser::parseTyped("{}")->toSnbt($format))->toBe("{}")
+			->and(SNBTParser::parseTyped("[]")->toSnbt($format))->toBe("[]")
+			->and(SNBTParser::parseTyped("[I;]")->toSnbt($format))->toBe("[I;]");
+	}
+});
+
+test("every format re-parses to the same tree", function () {
+	$tag = SNBTParser::parseTyped('{a:1b,b:[1,2],c:{d:"x y"},e:[I;1,2,3]}');
+
+	foreach ([ESnbtFormat::Compact, ESnbtFormat::Spaced, ESnbtFormat::Pretty] as $format) {
+		expect(SNBTParser::parseTyped($tag->toSnbt($format))->toPhp())->toEqual($tag->toPhp());
+	}
 });
 
 test("escapes control characters when serializing", function () {
