@@ -12,7 +12,7 @@ composer require stilling/snbt-parser
 > Need to fetch this data from a server first? [`stilling/minecraft-rcon`](https://packagist.org/packages/stilling/minecraft-rcon) is a lightweight Minecraft RCON client that handles multi-packet responses - run commands like `data get ...` and feed the output straight into this parser.
 
 > [!NOTE]
-> Under the hood this package transposes the SNBT to JSON and decodes it with `json_decode()`. Numeric values keep their full precision, but the NBT type suffixes are not retained - every integer type (`b`/`s`/`i`/`l`) becomes a PHP `int` and every floating-point type (`f`/`d`) becomes a PHP `float`. A potential v2 may parse SNBT directly to preserve type information and skip the JSON round-trip.
+> `parse()` returns native PHP types, collapsing the NBT type suffixes the way you usually want them - every integer type (`b`/`s`/`i`/`l`) becomes a PHP `int` and every floating-point type (`f`/`d`) becomes a PHP `float`. When you need to keep the exact NBT types - or re-serialize back to SNBT - use [`parseTyped()`](#preserving-nbt-types) instead.
 
 Here's an example parsing the SNBT data of a chest using the following command: `data get block -40 73 -11`
 
@@ -61,6 +61,62 @@ SNBTParser::parse('{z: -11, x: -40, id: "minecraft:chest", y: 73, Items: [{count
     ],
 ]
 ```
+
+## Preserving NBT types
+
+`parse()` is lossy by design - it can't tell a `byte` from an `int`. When the distinction matters, or you want to edit and re-serialize SNBT, use `parseTyped()`, which returns a tree of typed tags instead:
+
+```php
+use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\ByteTag;
+
+$tag = SNBTParser::parseTyped('{ Slot: 3b, id: "minecraft:shield" }');
+
+$tag->get("Slot") instanceof ByteTag; // true
+$tag->get("id")->toPhp();             // "minecraft:shield"
+
+$tag->toPhp();                        // [ "Slot" => 3, "id" => "minecraft:shield" ]
+$tag->toSnbt();                       // '{Slot:3b,id:"minecraft:shield"}'
+```
+
+Every value becomes a `Tag` subclass under `Stilling\SNBTParser\Tag`: `ByteTag`, `ShortTag`, `IntTag`, `LongTag`, `FloatTag`, `DoubleTag`, `BooleanTag`, `StringTag`, `ByteArrayTag`, `IntArrayTag`, `LongArrayTag`, `ListTag` and `CompoundTag`. Each one exposes:
+
+- `toPhp()` - the native PHP value (the same thing `parse()` returns)
+- `toSnbt()` - the value re-serialized back to SNBT, preserving its type
+
+`CompoundTag` additionally provides `get(string $key): ?Tag` and `has(string $key): bool`, and the container tags expose their contents as readonly `entries` / `items` / `values` properties.
+
+### Formatting the output
+
+`toSnbt()` accepts an `SNBTFormat` to control its layout. It defaults to `Compact`:
+
+```php
+use Stilling\SNBTParser\SNBTFormat;
+use Stilling\SNBTParser\SNBTParser;
+
+$tag = SNBTParser::parseTyped('{name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}');
+
+$tag->toSnbt();                      // {name:"Steve",pos:[1.0d,2.0d],nested:{a:1b}}
+$tag->toSnbt(SNBTFormat::Spaced);    // { name: "Steve", pos: [ 1.0d, 2.0d ], nested: { a: 1b } }
+$tag->toSnbt(SNBTFormat::Pretty);
+```
+
+`SNBTFormat::Pretty` indents compounds and lists across lines (four spaces per level), while keeping typed number arrays on a single line:
+
+```
+{
+    name: "Steve",
+    pos: [
+        1.0d,
+        2.0d
+    ],
+    nested: {
+        a: 1b
+    }
+}
+```
+
+All three formats produce valid SNBT that parses back to the same tree.
 
 ## Converting UUIDs
 
