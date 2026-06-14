@@ -97,7 +97,7 @@ use Stilling\SNBTParser\SNBTParser;
 $tag = SNBTParser::parseTyped('{name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}');
 
 $tag->toSnbt();                      // {name:"Steve",pos:[1.0d,2.0d],nested:{a:1b}}
-$tag->toSnbt(SNBTFormat::Spaced);    // {name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}
+$tag->toSnbt(SNBTFormat::Spaced);    // { name: "Steve", pos: [ 1.0d, 2.0d ], nested: { a: 1b } }
 $tag->toSnbt(SNBTFormat::Pretty);
 ```
 

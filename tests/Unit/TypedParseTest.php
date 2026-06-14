@@ -137,10 +137,16 @@ test("formats output as compact, spaced or pretty", function () {
 
 	expect($tag->toSnbt())->toBe('{a:1b,ids:[I;1,2],nested:{c:true}}')
 		->and($tag->toSnbt(SNBTFormat::Compact))->toBe('{a:1b,ids:[I;1,2],nested:{c:true}}')
-		->and($tag->toSnbt(SNBTFormat::Spaced))->toBe('{a: 1b, ids: [I; 1, 2], nested: {c: true}}')
+		->and($tag->toSnbt(SNBTFormat::Spaced))->toBe('{ a: 1b, ids: [I; 1, 2], nested: { c: true } }')
 		->and($tag->toSnbt(SNBTFormat::Pretty))->toBe(
 			"{\n    a: 1b,\n    ids: [I; 1, 2],\n    nested: {\n        c: true\n    }\n}"
 		);
+});
+
+test("spaced format pads compounds and lists but not typed arrays", function () {
+	$tag = SNBTParser::parseTyped('{a:[1,2],b:[I;1,2],c:{}}');
+
+	expect($tag->toSnbt(SNBTFormat::Spaced))->toBe('{ a: [ 1, 2 ], b: [I; 1, 2], c: {} }');
 });
 
 test("empty containers stay inline in every format", function () {

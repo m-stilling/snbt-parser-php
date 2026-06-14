@@ -6,7 +6,7 @@ namespace Stilling\SNBTParser;
  * Controls how {@see \Stilling\SNBTParser\Tag\Tag::toSnbt()} formats its output:
  *
  *   Compact -> {a:1,b:[1,2]}
- *   Spaced  -> {a: 1, b: [1, 2]}
+ *   Spaced  -> { a: 1, b: [ 1, 2 ] }
  *   Pretty  -> multi-line, indented with four spaces
  */
 enum SNBTFormat {
@@ -33,17 +33,27 @@ enum SNBTFormat {
 	}
 
 	/**
-	 * Text after an opening bracket, before the first entry/item.
+	 * Text after an opening bracket, before the first entry/item. Spaced pads the
+	 * inside of compounds and lists with a single space (typed number arrays
+	 * render themselves and are unaffected).
 	 */
 	public function afterOpen(int $depth): string {
-		return $this === self::Pretty ? "\n" . $this->indentation($depth + 1) : "";
+		return match ($this) {
+			self::Compact => "",
+			self::Spaced => " ",
+			self::Pretty => "\n" . $this->indentation($depth + 1),
+		};
 	}
 
 	/**
 	 * Text before a closing bracket, after the last entry/item.
 	 */
 	public function beforeClose(int $depth): string {
-		return $this === self::Pretty ? "\n" . $this->indentation($depth) : "";
+		return match ($this) {
+			self::Compact => "",
+			self::Spaced => " ",
+			self::Pretty => "\n" . $this->indentation($depth),
+		};
 	}
 
 	public function indentation(int $depth): string {
