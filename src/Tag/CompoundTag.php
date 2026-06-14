@@ -48,6 +48,6 @@ class CompoundTag extends Tag {
 			return $key;
 		}
 
-		return '"' . str_replace(["\\", '"'], ["\\\\", '\\"'], $key) . '"';
+		return self::quote($key);
 	}
 }

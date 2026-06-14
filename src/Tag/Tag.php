@@ -21,4 +21,18 @@ abstract class Tag {
 	 * Re-serialize this tag back to SNBT, retaining its NBT type.
 	 */
 	abstract public function toSnbt(): string;
+
+	/**
+	 * Quote a string for SNBT output, escaping the sequences the parser decodes:
+	 * the backslash, the double quote, and the \n / \r / \t control characters.
+	 */
+	protected static function quote(string $value): string {
+		$escaped = str_replace(
+			["\\", '"', "\n", "\r", "\t"],
+			['\\\\', '\\"', '\\n', '\\r', '\\t'],
+			$value,
+		);
+
+		return '"' . $escaped . '"';
+	}
 }

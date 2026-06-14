@@ -114,6 +114,16 @@ test("serializes tags back to snbt", function () {
 		->and(SNBTParser::parseTyped("[I;1,2]")->toSnbt())->toBe("[I;1,2]");
 });
 
+test("escapes control characters when serializing", function () {
+	$bs = chr(92);
+
+	// A real newline/tab in the value must be written back escaped, not raw.
+	expect((new StringTag("a\nb"))->toSnbt())->toBe('"a' . $bs . 'nb"')
+		->and((new StringTag("x\ty"))->toSnbt())->toBe('"x' . $bs . 'ty"')
+		// ...and the escaped form round-trips to the original bytes.
+		->and(SNBTParser::parseTyped((new StringTag("a\nb"))->toSnbt())->toPhp())->toBe("a\nb");
+});
+
 test("round-trips double precision through serialization", function () {
 	expect(SNBTParser::parseTyped("0.10000000149011612d")->toSnbt())->toBe("0.10000000149011612d");
 });

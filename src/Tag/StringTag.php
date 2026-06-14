@@ -11,6 +11,6 @@ class StringTag extends Tag {
 	}
 
 	public function toSnbt(): string {
-		return '"' . str_replace(["\\", '"'], ["\\\\", '\\"'], $this->value) . '"';
+		return self::quote($this->value);
 	}
 }
