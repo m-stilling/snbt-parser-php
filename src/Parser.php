@@ -26,12 +26,12 @@ use Stilling\SNBTParser\Tag\Tag;
  * through untouched (UTF-8 continuation bytes never collide with the ASCII
  * delimiters), which is why no mbstring functions are needed.
  */
-final class Parser {
-	private int $position = 0;
+class Parser {
+	protected int $position = 0;
 
-	private readonly int $length;
+	protected readonly int $length;
 
-	public function __construct(private readonly string $input) {
+	public function __construct(protected readonly string $input) {
 		$this->length = strlen($input);
 	}
 
@@ -46,7 +46,7 @@ final class Parser {
 		return $tag;
 	}
 
-	private function parseValue(): Tag {
+	protected function parseValue(): Tag {
 		$this->skipWhitespace();
 
 		$char = $this->currentOrFail("a value");
@@ -59,7 +59,7 @@ final class Parser {
 		};
 	}
 
-	private function parseCompound(): CompoundTag {
+	protected function parseCompound(): CompoundTag {
 		$this->position++; // consume "{"
 		$entries = [];
 
@@ -99,7 +99,7 @@ final class Parser {
 		return new CompoundTag($entries);
 	}
 
-	private function parseKey(): string {
+	protected function parseKey(): string {
 		$char = $this->currentOrFail("a key");
 
 		if ($char === '"' || $char === "'") {
@@ -119,7 +119,7 @@ final class Parser {
 		return substr($this->input, $start, $this->position - $start);
 	}
 
-	private function parseListOrArray(): Tag {
+	protected function parseListOrArray(): Tag {
 		$arrayType = $this->detectTypedArray();
 
 		if ($arrayType !== null) {
@@ -134,7 +134,7 @@ final class Parser {
 	 * number array, or null for a regular list. The trailing ";" is what
 	 * distinguishes `[I; ...]` from a list such as `[I, J]`.
 	 */
-	private function detectTypedArray(): ?string {
+	protected function detectTypedArray(): ?string {
 		$index = $this->position + 1;
 
 		while ($index < $this->length && $this->isWhitespace($this->input[$index])) {
@@ -150,7 +150,7 @@ final class Parser {
 		return ($letter === "B" || $letter === "I" || $letter === "L") ? $letter : null;
 	}
 
-	private function parseTypedArray(string $type): NumberArrayTag {
+	protected function parseTypedArray(string $type): NumberArrayTag {
 		$this->position++; // consume "["
 		$this->skipWhitespace();
 		$this->position++; // consume the type letter
@@ -191,7 +191,7 @@ final class Parser {
 		return $this->makeArrayTag($type, $values);
 	}
 
-	private function parseArrayElement(): int {
+	protected function parseArrayElement(): int {
 		$start = $this->position;
 
 		while (!$this->eof() && $this->isLiteralChar($this->input[$this->position])) {
@@ -209,7 +209,7 @@ final class Parser {
 	/**
 	 * @param list<int> $values
 	 */
-	private function makeArrayTag(string $type, array $values): NumberArrayTag {
+	protected function makeArrayTag(string $type, array $values): NumberArrayTag {
 		return match ($type) {
 			"B" => new ByteArrayTag($values),
 			"I" => new IntArrayTag($values),
@@ -217,7 +217,7 @@ final class Parser {
 		};
 	}
 
-	private function parseList(): ListTag {
+	protected function parseList(): ListTag {
 		$this->position++; // consume "["
 		$items = [];
 
@@ -253,7 +253,7 @@ final class Parser {
 		return new ListTag($items);
 	}
 
-	private function parseLiteral(): Tag {
+	protected function parseLiteral(): Tag {
 		$start = $this->position;
 
 		while (!$this->eof() && $this->isLiteralChar($this->input[$this->position])) {
@@ -267,7 +267,7 @@ final class Parser {
 		return $this->classifyLiteral(substr($this->input, $start, $this->position - $start));
 	}
 
-	private function classifyLiteral(string $literal): Tag {
+	protected function classifyLiteral(string $literal): Tag {
 		if ($literal === "true") {
 			return new BooleanTag(true);
 		}
@@ -295,7 +295,7 @@ final class Parser {
 		return new StringTag($literal);
 	}
 
-	private function classifyUnsuffixedNumber(string $mantissa): Tag {
+	protected function classifyUnsuffixedNumber(string $mantissa): Tag {
 		if (str_contains($mantissa, ".") || str_contains($mantissa, "e") || str_contains($mantissa, "E")) {
 			return new DoubleTag((float) $mantissa);
 		}
@@ -303,7 +303,7 @@ final class Parser {
 		return new IntTag((int) $mantissa);
 	}
 
-	private function readQuotedString(): string {
+	protected function readQuotedString(): string {
 		$quote = $this->input[$this->position];
 		$this->position++; // consume opening quote
 		$result = "";
@@ -330,7 +330,7 @@ final class Parser {
 		}
 	}
 
-	private function readEscape(string $quote): string {
+	protected function readEscape(string $quote): string {
 		if ($this->eof()) {
 			throw $this->error("Unterminated escape sequence");
 		}
@@ -348,7 +348,7 @@ final class Parser {
 		};
 	}
 
-	private function isLiteralChar(string $char): bool {
+	protected function isLiteralChar(string $char): bool {
 		return $char === "_"
 			|| $char === "."
 			|| $char === "+"
@@ -356,25 +356,25 @@ final class Parser {
 			|| ctype_alnum($char);
 	}
 
-	private function isWhitespace(string $char): bool {
+	protected function isWhitespace(string $char): bool {
 		return $char === " " || $char === "\t" || $char === "\n" || $char === "\r";
 	}
 
-	private function skipWhitespace(): void {
+	protected function skipWhitespace(): void {
 		while (!$this->eof() && $this->isWhitespace($this->input[$this->position])) {
 			$this->position++;
 		}
 	}
 
-	private function eof(): bool {
+	protected function eof(): bool {
 		return $this->position >= $this->length;
 	}
 
-	private function currentIs(string $char): bool {
+	protected function currentIs(string $char): bool {
 		return !$this->eof() && $this->input[$this->position] === $char;
 	}
 
-	private function currentOrFail(string $expected): string {
+	protected function currentOrFail(string $expected): string {
 		if ($this->eof()) {
 			throw $this->error("Expected {$expected} but reached the end of the input");
 		}
@@ -382,7 +382,7 @@ final class Parser {
 		return $this->input[$this->position];
 	}
 
-	private function expect(string $char): void {
+	protected function expect(string $char): void {
 		if (!$this->currentIs($char)) {
 			throw $this->error("Expected '{$char}'");
 		}
@@ -390,7 +390,7 @@ final class Parser {
 		$this->position++;
 	}
 
-	private function error(string $message): SNBTParseException {
+	protected function error(string $message): SNBTParseException {
 		$snippet = substr($this->input, $this->position, 20);
 
 		return new SNBTParseException("{$message} at position {$this->position} near \"{$snippet}\".");

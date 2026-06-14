@@ -5,7 +5,7 @@ namespace Stilling\SNBTParser\Tag;
 /**
  * A compound (`{...}`) — an ordered, keyed map of tags.
  */
-final class CompoundTag extends Tag {
+class CompoundTag extends Tag {
 	/**
 	 * @param array<string, Tag> $entries
 	 */
@@ -43,7 +43,7 @@ final class CompoundTag extends Tag {
 		return "{" . implode(",", $parts) . "}";
 	}
 
-	private function serializeKey(string $key): string {
+	protected function serializeKey(string $key): string {
 		if ($key !== "" && preg_match('/^[A-Za-z0-9_.+-]+$/', $key) === 1) {
 			return $key;
 		}

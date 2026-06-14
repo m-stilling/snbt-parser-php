@@ -6,7 +6,7 @@ namespace Stilling\SNBTParser\Tag;
  * An ordered list of tags (`[...]`). NBT lists are homogeneous; this parser does
  * not enforce that, leaving validation to the caller.
  */
-final class ListTag extends Tag {
+class ListTag extends Tag {
 	/**
 	 * @param list<Tag> $items
 	 */

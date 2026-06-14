@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-final class ByteArrayTag extends NumberArrayTag {
+class ByteArrayTag extends NumberArrayTag {
 	protected function bracketType(): string {
 		return "B";
 	}

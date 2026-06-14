@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-final class StringTag extends Tag {
+class StringTag extends Tag {
 	public function __construct(public readonly string $value) {
 	}
 
