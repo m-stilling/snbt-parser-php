@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTFormat;
 
 /**
  * A compound (`{...}`) — an ordered, keyed map of tags.
@@ -35,7 +35,7 @@ class CompoundTag extends Tag {
 		return $result;
 	}
 
-	protected function render(ESnbtFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth): string {
 		if ($this->entries === []) {
 			return "{}";
 		}

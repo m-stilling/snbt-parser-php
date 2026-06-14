@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTFormat;
 
 /**
  * Base class for every parsed SNBT value. Unlike the v1 JSON round-trip, the
@@ -22,7 +22,7 @@ abstract class Tag {
 	/**
 	 * Re-serialize this tag back to SNBT, retaining its NBT type.
 	 */
-	public function toSnbt(ESnbtFormat $format = ESnbtFormat::Compact): string {
+	public function toSnbt(SNBTFormat $format = SNBTFormat::Compact): string {
 		return $this->render($format, 0);
 	}
 
@@ -30,7 +30,7 @@ abstract class Tag {
 	 * Render this tag at the given nesting depth. Containers thread the depth
 	 * through their children so Pretty formatting can indent correctly.
 	 */
-	abstract protected function render(ESnbtFormat $format, int $depth): string;
+	abstract protected function render(SNBTFormat $format, int $depth): string;
 
 	/**
 	 * Quote a string for SNBT output, escaping the sequences the parser decodes:

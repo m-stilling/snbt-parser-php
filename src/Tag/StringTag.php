@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTFormat;
 
 class StringTag extends Tag {
 	public function __construct(public readonly string $value) {
@@ -12,7 +12,7 @@ class StringTag extends Tag {
 		return $this->value;
 	}
 
-	protected function render(ESnbtFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth): string {
 		return self::quote($this->value);
 	}
 }

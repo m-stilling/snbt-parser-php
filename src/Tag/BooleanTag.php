@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTFormat;
 
 /**
  * SNBT's `true`/`false`. NBT stores these as bytes, but keeping a distinct tag
@@ -16,7 +16,7 @@ class BooleanTag extends Tag {
 		return $this->value;
 	}
 
-	protected function render(ESnbtFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth): string {
 		return $this->value ? "true" : "false";
 	}
 }

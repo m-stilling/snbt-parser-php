@@ -9,7 +9,7 @@ namespace Stilling\SNBTParser;
  *   Spaced  -> {a: 1, b: [1, 2]}
  *   Pretty  -> multi-line, indented with four spaces
  */
-enum ESnbtFormat {
+enum SNBTFormat {
 	case Compact;
 	case Spaced;
 	case Pretty;

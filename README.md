@@ -88,20 +88,20 @@ Every value becomes a `Tag` subclass under `Stilling\SNBTParser\Tag`: `ByteTag`,
 
 ### Formatting the output
 
-`toSnbt()` accepts an `ESnbtFormat` to control its layout. It defaults to `Compact`:
+`toSnbt()` accepts an `SNBTFormat` to control its layout. It defaults to `Compact`:
 
 ```php
-use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTFormat;
 use Stilling\SNBTParser\SNBTParser;
 
 $tag = SNBTParser::parseTyped('{name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}');
 
 $tag->toSnbt();                      // {name:"Steve",pos:[1.0d,2.0d],nested:{a:1b}}
-$tag->toSnbt(ESnbtFormat::Spaced);   // {name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}
-$tag->toSnbt(ESnbtFormat::Pretty);
+$tag->toSnbt(SNBTFormat::Spaced);    // {name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}
+$tag->toSnbt(SNBTFormat::Pretty);
 ```
 
-`ESnbtFormat::Pretty` indents compounds and lists across lines (four spaces per level), while keeping typed number arrays on a single line:
+`SNBTFormat::Pretty` indents compounds and lists across lines (four spaces per level), while keeping typed number arrays on a single line:
 
 ```
 {

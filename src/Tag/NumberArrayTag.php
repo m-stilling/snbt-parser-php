@@ -2,7 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
-use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTFormat;
 
 /**
  * Shared base for the three typed integer arrays (`[B;...]`, `[I;...]`,
@@ -23,13 +23,13 @@ abstract class NumberArrayTag extends Tag {
 		return $this->values;
 	}
 
-	protected function render(ESnbtFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth): string {
 		if ($this->values === []) {
 			return "[" . $this->bracketType() . ";]";
 		}
 
 		// Number arrays stay on one line; only the separators gain spaces.
-		$spaced = $format !== ESnbtFormat::Compact;
+		$spaced = $format !== SNBTFormat::Compact;
 		$elements = array_map(fn (int $value): string => $value . $this->elementSuffix(), $this->values);
 
 		return "[" . $this->bracketType() . ($spaced ? "; " : ";")
