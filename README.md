@@ -86,6 +86,38 @@ Every value becomes a `Tag` subclass under `Stilling\SNBTParser\Tag`: `ByteTag`,
 
 `CompoundTag` additionally provides `get(string $key): ?Tag` and `has(string $key): bool`, and the container tags expose their contents as readonly `entries` / `items` / `values` properties.
 
+### Formatting the output
+
+`toSnbt()` accepts an `ESnbtFormat` to control its layout. It defaults to `Compact`:
+
+```php
+use Stilling\SNBTParser\ESnbtFormat;
+use Stilling\SNBTParser\SNBTParser;
+
+$tag = SNBTParser::parseTyped('{name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}');
+
+$tag->toSnbt();                      // {name:"Steve",pos:[1.0d,2.0d],nested:{a:1b}}
+$tag->toSnbt(ESnbtFormat::Spaced);   // {name: "Steve", pos: [1.0d, 2.0d], nested: {a: 1b}}
+$tag->toSnbt(ESnbtFormat::Pretty);
+```
+
+`ESnbtFormat::Pretty` indents compounds and lists across lines (four spaces per level), while keeping typed number arrays on a single line:
+
+```
+{
+    name: "Steve",
+    pos: [
+        1.0d,
+        2.0d
+    ],
+    nested: {
+        a: 1b
+    }
+}
+```
+
+All three formats produce valid SNBT that parses back to the same tree.
+
 ## Converting UUIDs
 
 Minecraft stores UUIDs as four-integer arrays (e.g. `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`). Once parsed, pass that array to `intsToUuid()` to get the canonical string form:
