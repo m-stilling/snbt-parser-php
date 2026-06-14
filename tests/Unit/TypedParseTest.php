@@ -64,6 +64,14 @@ test("parses unquoted string values", function () {
 	expect(SNBTParser::parse("{ id: stone }"))->toBe([ "id" => "stone" ]);
 });
 
+test("does not treat 0b/1b as booleans", function () {
+	// Only the true/false keywords are booleans; bytes stay bytes (strict int).
+	expect(SNBTParser::parseTyped("1b"))->toBeInstanceOf(ByteTag::class)
+		->and(SNBTParser::parseTyped("0b"))->toBeInstanceOf(ByteTag::class)
+		->and(SNBTParser::parse("1b"))->toBe(1)
+		->and(SNBTParser::parse("0b"))->toBe(0);
+});
+
 test("preserves the distinct array types", function () {
 	expect(SNBTParser::parseTyped("[B;1b,2b]"))->toBeInstanceOf(ByteArrayTag::class)
 		->and(SNBTParser::parseTyped("[B;1b,2b]")->toPhp())->toBe([ 1, 2 ])
