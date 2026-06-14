@@ -110,8 +110,17 @@ test("serializes tags back to snbt", function () {
 		->and(SNBTParser::parseTyped("5l")->toSnbt())->toBe("5l")
 		->and(SNBTParser::parseTyped("true")->toSnbt())->toBe("true")
 		->and(SNBTParser::parseTyped('"a\"b"')->toSnbt())->toBe('"a\"b"')
-		->and(SNBTParser::parseTyped("[B;1b,2b]")->toSnbt())->toBe("[B;1B,2B]")
+		// Array element suffixes are lowercase, matching Minecraft.
+		->and(SNBTParser::parseTyped("[B;1b,2b]")->toSnbt())->toBe("[B;1b,2b]")
+		->and(SNBTParser::parseTyped("[L;1l,2l]")->toSnbt())->toBe("[L;1l,2l]")
 		->and(SNBTParser::parseTyped("[I;1,2]")->toSnbt())->toBe("[I;1,2]");
+});
+
+test("keeps the decimal point on whole floats and doubles", function () {
+	expect(SNBTParser::parseTyped("20.0f")->toSnbt())->toBe("20.0f")
+		->and(SNBTParser::parseTyped("1f")->toSnbt())->toBe("1.0f")
+		->and(SNBTParser::parseTyped("65.0d")->toSnbt())->toBe("65.0d")
+		->and(SNBTParser::parseTyped("-19.5d")->toSnbt())->toBe("-19.5d");
 });
 
 test("escapes control characters when serializing", function () {

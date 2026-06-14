@@ -8,6 +8,6 @@ class ByteArrayTag extends NumberArrayTag {
 	}
 
 	protected function elementSuffix(): string {
-		return "B";
+		return "b";
 	}
 }

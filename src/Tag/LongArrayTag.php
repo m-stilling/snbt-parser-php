@@ -8,6 +8,6 @@ class LongArrayTag extends NumberArrayTag {
 	}
 
 	protected function elementSuffix(): string {
-		return "L";
+		return "l";
 	}
 }

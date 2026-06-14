@@ -19,6 +19,14 @@ abstract class FloatingPointTag extends Tag {
 	 * serialize_precision (-1 by default) and yields the shortest exact form.
 	 */
 	protected function formatValue(): string {
-		return json_encode($this->value, JSON_THROW_ON_ERROR);
+		$formatted = json_encode($this->value, JSON_THROW_ON_ERROR);
+
+		// json_encode drops the fraction of a whole number (20.0 -> "20"); SNBT
+		// floats and doubles keep a decimal point so the value still reads as one.
+		if (!str_contains($formatted, ".") && !str_contains($formatted, "e") && !str_contains($formatted, "E")) {
+			$formatted .= ".0";
+		}
+
+		return $formatted;
 	}
 }
