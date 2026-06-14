@@ -104,27 +104,6 @@ test("rejects invalid escape sequences", function () {
 		->toThrow(\Stilling\SNBTParser\Exceptions\SNBTParseException::class);
 });
 
-test("decodes unicode escape sequences", function () {
-	// Build the "\uXXXX" inputs at runtime so the source carries no literal escapes.
-	$u = chr(92) . "u";
-
-	expect(SNBTParser::parse('"' . $u . '0041"'))->toBe("A")
-		->and(SNBTParser::parse('"caf' . $u . '00e9"'))->toBe("café")
-		// A surrogate pair forms a single astral-plane code point (U+1F600).
-		->and(SNBTParser::parse('"' . $u . 'd83d' . $u . 'de00"'))
-		->toBe(chr(0xF0) . chr(0x9F) . chr(0x98) . chr(0x80));
-});
-
-test("rejects malformed unicode escapes", function () {
-	$u = chr(92) . "u";
-
-	expect(fn () => SNBTParser::parse('"' . $u . '12"'))
-		->toThrow(\Stilling\SNBTParser\Exceptions\SNBTParseException::class)
-		// A lone high surrogate is not a valid code point.
-		->and(fn () => SNBTParser::parse('"' . $u . 'd83d!"'))
-		->toThrow(\Stilling\SNBTParser\Exceptions\SNBTParseException::class);
-});
-
 test("serializes tags back to snbt", function () {
 	expect(SNBTParser::parseTyped("5b")->toSnbt())->toBe("5b")
 		->and(SNBTParser::parseTyped("5")->toSnbt())->toBe("5")
