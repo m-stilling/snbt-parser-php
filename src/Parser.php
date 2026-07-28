@@ -168,7 +168,7 @@ class Parser {
 
 		while (true) {
 			$this->skipWhitespace();
-			$values[] = $this->parseArrayElement();
+			$values[] = $this->parseArrayElement($type);
 			$this->skipWhitespace();
 
 			$char = $this->currentOrFail("',' or ']'");
@@ -191,7 +191,7 @@ class Parser {
 		return $this->makeArrayTag($type, $values);
 	}
 
-	protected function parseArrayElement(): int {
+	protected function parseArrayElement(string $type): int {
 		$start = $this->position;
 
 		while (!$this->eof() && $this->isLiteralChar($this->input[$this->position])) {
@@ -202,8 +202,23 @@ class Parser {
 			throw $this->error("Expected an array element");
 		}
 
-		// The literal may carry a type suffix (e.g. "1b"); the int cast stops at it.
-		return (int) substr($this->input, $start, $this->position - $start);
+		$literal = substr($this->input, $start, $this->position - $start);
+
+		// Vanilla accepts the boolean keywords inside byte arrays, as bytes.
+		if ($type === "B" && ($literal === "true" || $literal === "false")) {
+			return $literal === "true" ? 1 : 0;
+		}
+
+		// An integer, optionally carrying any of the integer type suffixes (the
+		// parser has always been lenient about the exact suffix); the int cast
+		// stops at it. Decimals and float suffixes are not integers and throw.
+		if (preg_match('/^[+-]?\d+[bsil]?$/i', $literal) !== 1) {
+			$this->position = $start;
+
+			throw $this->error("Invalid {$type} array element \"{$literal}\"");
+		}
+
+		return (int) $literal;
 	}
 
 	/**

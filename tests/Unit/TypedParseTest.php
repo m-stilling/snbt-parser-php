@@ -81,6 +81,29 @@ test("preserves the distinct array types", function () {
 		->and(SNBTParser::parseTyped("[1,2]"))->toBeInstanceOf(ListTag::class);
 });
 
+test("accepts booleans in byte arrays as bytes", function () {
+	expect(SNBTParser::parse("[B;true,false,1b]"))->toBe([ 1, 0, 1 ])
+		->and(SNBTParser::parseTyped("[B;true]"))->toBeInstanceOf(ByteArrayTag::class);
+});
+
+test("rejects invalid array elements", function () {
+	// Non-numeric literals, decimals, float suffixes and booleans outside byte
+	// arrays must throw instead of silently casting to 0.
+	foreach ([ "[I;foo]", "[I;1.5]", "[I;1f]", "[L;1d]", "[I;true]", "[L;false]" ] as $snbt) {
+		expect(fn () => SNBTParser::parseTyped($snbt))
+			->toThrow(\Stilling\SNBTParser\Exceptions\SNBTParseException::class);
+	}
+});
+
+test("accepts unsuffixed and case-insensitive suffixed array elements", function () {
+	// Any integer suffix is accepted in any array type (locked by the v1 tests),
+	// matched case-insensitively, as elsewhere.
+	expect(SNBTParser::parse("[B;1,2B]"))->toBe([ 1, 2 ])
+		->and(SNBTParser::parse("[L;3,4L]"))->toBe([ 3, 4 ])
+		->and(SNBTParser::parse("[I;1b,2s,3l]"))->toBe([ 1, 2, 3 ])
+		->and(SNBTParser::parse("[I;-5,+6]"))->toBe([ -5, 6 ]);
+});
+
 test("navigates compounds and lists", function () {
 	$tag = SNBTParser::parseTyped('{ a: 1b, b: [ "x", "y" ] }');
 	expect($tag)->toBeInstanceOf(CompoundTag::class);
