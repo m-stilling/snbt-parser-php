@@ -8,12 +8,25 @@ use Stilling\SNBTParser\SNBTFormat;
  * Shared base for the three typed integer arrays (`[B;...]`, `[I;...]`,
  * `[L;...]`). The concrete subclass supplies the bracket type letter and the
  * suffix each element is written with.
+ *
+ * @implements \IteratorAggregate<int, int>
  */
-abstract class NumberArrayTag extends Tag {
+abstract class NumberArrayTag extends Tag implements \Countable, \IteratorAggregate {
 	/**
 	 * @param list<int> $values
 	 */
 	public function __construct(public readonly array $values) {
+	}
+
+	public function count(): int {
+		return count($this->values);
+	}
+
+	/**
+	 * @return \ArrayIterator<int, int>
+	 */
+	public function getIterator(): \ArrayIterator {
+		return new \ArrayIterator($this->values);
 	}
 
 	/**

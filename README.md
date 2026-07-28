@@ -84,7 +84,7 @@ Every value becomes a `Tag` subclass under `Stilling\SNBTParser\Tag`: `ByteTag`,
 - `toPhp()` - the native PHP value (the same thing `parse()` returns)
 - `toSnbt()` - the value re-serialized back to SNBT, preserving its type
 
-`CompoundTag` additionally provides `get(string $key): ?Tag` and `has(string $key): bool`, and the container tags expose their contents as readonly `entries` / `items` / `values` properties.
+`CompoundTag` additionally provides `get(string $key): ?Tag` and `has(string $key): bool`, and `ListTag` provides `get(int $index): ?Tag`. The container tags are `Countable` and iterable (`count($tag)`, `foreach ($tag as $key => $value)`), and expose their contents as readonly `entries` / `items` / `values` properties.
 
 ### Formatting the output
 

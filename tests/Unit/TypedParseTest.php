@@ -125,6 +125,40 @@ test("navigates compounds and lists", function () {
 	}
 });
 
+test("container tags are countable and iterable", function () {
+	$compound = SNBTParser::parseTyped('{ a: 1b, b: 2b }');
+	expect($compound)->toBeInstanceOf(CompoundTag::class);
+
+	if ($compound instanceof CompoundTag) {
+		expect(count($compound))->toBe(2)
+			->and(array_keys(iterator_to_array($compound)))->toBe([ "a", "b" ]);
+	}
+
+	$array = SNBTParser::parseTyped("[I;7,8]");
+	expect($array)->toBeInstanceOf(IntArrayTag::class);
+
+	if ($array instanceof IntArrayTag) {
+		expect(count($array))->toBe(2)
+			->and(iterator_to_array($array))->toBe([ 7, 8 ]);
+	}
+});
+
+test("lists are countable, iterable and indexable", function () {
+	$list = SNBTParser::parseTyped('[ "x", "y", "z" ]');
+	expect($list)->toBeInstanceOf(ListTag::class);
+
+	if (!$list instanceof ListTag) {
+		return;
+	}
+
+	expect(count($list))->toBe(3)
+		->and(iterator_to_array($list))->toHaveCount(3)
+		->and($list->get(0))->toBeInstanceOf(StringTag::class)
+		->and($list->get(1)?->toPhp())->toBe("y")
+		->and($list->get(3))->toBeNull()
+		->and($list->get(-1))->toBeNull();
+});
+
 test("decodes escape sequences", function () {
 	expect(SNBTParser::parse('"line1\nline2"'))->toBe("line1\nline2")
 		->and(SNBTParser::parse('"tab\tend"'))->toBe("tab\tend")

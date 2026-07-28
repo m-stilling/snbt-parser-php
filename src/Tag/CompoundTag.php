@@ -6,8 +6,10 @@ use Stilling\SNBTParser\SNBTFormat;
 
 /**
  * A compound (`{...}`) — an ordered, keyed map of tags.
+ *
+ * @implements \IteratorAggregate<string, Tag>
  */
-class CompoundTag extends Tag {
+class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 	/**
 	 * @param array<string, Tag> $entries
 	 */
@@ -20,6 +22,17 @@ class CompoundTag extends Tag {
 
 	public function has(string $key): bool {
 		return isset($this->entries[$key]);
+	}
+
+	public function count(): int {
+		return count($this->entries);
+	}
+
+	/**
+	 * @return \ArrayIterator<string, Tag>
+	 */
+	public function getIterator(): \ArrayIterator {
+		return new \ArrayIterator($this->entries);
 	}
 
 	/**
