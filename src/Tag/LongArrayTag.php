@@ -1,0 +1,13 @@
+<?php
+
+namespace Stilling\SNBTParser\Tag;
+
+class LongArrayTag extends NumberArrayTag {
+	protected function bracketType(): string {
+		return "L";
+	}
+
+	protected function elementSuffix(): string {
+		return "l";
+	}
+}

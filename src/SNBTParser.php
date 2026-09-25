@@ -2,22 +2,25 @@
 
 namespace Stilling\SNBTParser;
 
-use Stilling\SNBTParser\Exceptions\SNBTParseException;
-use Stilling\SNBTParser\Tokens\InitialToken;
+use Stilling\SNBTParser\Tag\Tag;
 
 class SNBTParser {
 	/**
+	 * Parse SNBT into native PHP types. NBT type distinctions are collapsed the
+	 * same way as before (integers become int, decimals become float); use
+	 * {@see self::parseTyped()} when you need to keep them.
+	 *
 	 * @return array<mixed>|float|int|string|bool
 	 */
-	public static function parse(string $input): array|float|int|string|object|bool {
-		$json = static::readSNBT(mb_trim($input));
-		$array = json_decode($json, true);
+	public static function parse(string $input): array|float|int|string|bool {
+		return self::parseTyped($input)->toPhp();
+	}
 
-		if (json_last_error() !== JSON_ERROR_NONE) {
-			throw new SNBTParseException("SNBT is malformed, failed to decode JSON: " . json_last_error_msg());
-		}
-
-		return $array;
+	/**
+	 * Parse SNBT into a typed tag tree that preserves the original NBT types.
+	 */
+	public static function parseTyped(string $input): Tag {
+		return (new Parser($input))->parse();
 	}
 
 	/**
@@ -44,25 +47,5 @@ class SNBTParser {
 			substr($hex, 16, 4),
 			substr($hex, 20, 12),
 		]);
-	}
-
-	/**
-	 * @param string $snbt
-	 * @return string
-	 * @throws SNBTParseException
-	 */
-	protected static function readSNBT(string $snbt): string {
-		$json = "";
-		$currentToken = new InitialToken();
-
-		while (mb_strlen($snbt) > 0) {
-			[ $nextToken, $remainingSNBT ] = $currentToken->parseNextToken($snbt);
-
-			$json .= $nextToken->toJsonToken();
-			$snbt = $remainingSNBT;
-			$currentToken = $nextToken;
-		}
-
-		return $json;
 	}
 }
