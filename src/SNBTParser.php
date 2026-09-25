@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser;
 
+use Stilling\SNBTParser\Tag\IntArrayTag;
 use Stilling\SNBTParser\Tag\Tag;
 
 class SNBTParser {
@@ -47,5 +48,43 @@ class SNBTParser {
 			substr($hex, 16, 4),
 			substr($hex, 20, 12),
 		]);
+	}
+
+	/**
+	 * Inverse of {@see self::intsToUuid()}: turn a UUID string into the four
+	 * signed 32-bit integers Minecraft stores it as, ready for an `IntArrayTag`.
+	 * Accepts the canonical hyphenated form as well as 32 bare hex digits, in
+	 * either case.
+	 *
+	 * @return list<int>
+	 */
+	public static function uuidToInts(string $uuid): array {
+		$hex = str_replace("-", "", $uuid);
+
+		if (!preg_match('/^[0-9a-fA-F]{32}$/', $hex)) {
+			throw new \InvalidArgumentException("Invalid UUID: {$uuid}");
+		}
+
+		$bytes = hex2bin($hex);
+		$unsigned = $bytes === false ? false : unpack("N4", $bytes);
+		if ($unsigned === false) {
+			throw new \InvalidArgumentException("Invalid UUID: {$uuid}");
+		}
+
+		$ints = [];
+		foreach ($unsigned as $value) {
+			// unpack("N") yields unsigned values; wrap them back into the signed 32-bit range.
+			$ints[] = $value >= 0x80000000 ? $value - 0x100000000 : $value;
+		}
+
+		return $ints;
+	}
+
+	/**
+	 * Turn a UUID string into the SNBT int array Minecraft stores it as, e.g.
+	 * `[I;110787060,1156138790,-1514210135,238594805]`.
+	 */
+	public static function uuidToSnbt(string $uuid, SNBTFormat $format = SNBTFormat::Compact): string {
+		return (new IntArrayTag(self::uuidToInts($uuid)))->toSnbt($format);
 	}
 }

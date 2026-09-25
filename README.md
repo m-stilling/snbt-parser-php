@@ -120,12 +120,24 @@ All three formats produce valid SNBT that parses back to the same tree.
 
 ## Converting UUIDs
 
-Minecraft stores UUIDs as four-integer arrays (e.g. `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`). Once parsed, pass that array to `intsToUuid()` to get the canonical string form:
+Minecraft stores UUIDs as four-integer arrays, e.g. `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`. Four helpers convert between that form and the canonical string. `uuidToInts()` and `uuidToSnbt()` accept the hyphenated form or 32 bare hex digits, in either case. `intsToUuid()` and `toUuid()` throw `InvalidArgumentException` unless the array holds exactly four integers.
 
 ```php
+use Stilling\SNBTParser\SNBTFormat;
 use Stilling\SNBTParser\SNBTParser;
 
 SNBTParser::intsToUuid([110787060, 1156138790, -1514210135, 238594805]);
+// "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
-// returns -> "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+SNBTParser::parseTyped('{UUID: [I; 110787060, 1156138790, -1514210135, 238594805]}')->get("UUID")->toUuid();
+// "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+
+SNBTParser::uuidToInts("069a79f4-44e9-4726-a5be-fca90e38aaf5");
+// [110787060, 1156138790, -1514210135, 238594805]
+
+SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5");
+// "[I;110787060,1156138790,-1514210135,238594805]"
+
+SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Spaced);
+// "[I; 110787060, 1156138790, -1514210135, 238594805]"
 ```
