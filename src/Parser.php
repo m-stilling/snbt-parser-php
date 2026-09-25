@@ -368,7 +368,9 @@ class Parser {
 			|| $char === "."
 			|| $char === "+"
 			|| $char === "-"
-			|| ctype_alnum($char);
+			|| ($char >= "0" && $char <= "9")
+			|| ($char >= "A" && $char <= "Z")
+			|| ($char >= "a" && $char <= "z");
 	}
 
 	protected function isWhitespace(string $char): bool {
