@@ -230,15 +230,38 @@ The parser reads the SNBT that Minecraft writes, for example the output of `data
 
 - compounds, lists, and the typed arrays `[B;...]`, `[I;...]` and `[L;...]`
 - numbers with the suffixes `b`, `s`, `i`, `l`, `f` and `d`, in either case, and numbers without a suffix (`1` is an int, `1.0` and `1e3` are doubles)
+- the number forms from Minecraft 1.21.5, described in [Numbers](#numbers)
 - `true` and `false`
 - strings in double or single quotes, with the escapes `\\`, `\n`, `\r` and `\t`, and a backslash before the quote character that opens the string
 - unquoted strings and keys, made of `A-Z`, `a-z`, `0-9`, `_`, `-`, `.` and `+`
 
 The parser does not read the syntax that Minecraft 1.21.5 added for commands and data packs:
 
-- `0x1F`, `0b101`, `1_000` and signedness suffixes such as `5ub` become unquoted strings
 - the escapes `\x`, `\u`, `\U` and `\N{...}` cause `SNBTParseException`
 - operations such as `bool(...)` and `uuid(...)` cause `SNBTParseException`
+
+### Numbers
+
+The parser reads the number forms that Minecraft 1.21.5 added:
+
+| Form | Example | Result |
+| --- | --- | --- |
+| hexadecimal | `0xCAFE` | `IntTag` 51966 |
+| binary | `0b101` | `IntTag` 5 |
+| `_` between digits | `1_000`, `1_2.3_4f` | `IntTag` 1000, `FloatTag` 12.34 |
+| no whole part or no fraction | `.5`, `1.` | `DoubleTag` 0.5, `DoubleTag` 1.0 |
+| unsigned suffix | `240ub` | `ByteTag` -16 |
+| signed suffix | `5sb` | `ByteTag` 5 |
+
+The signedness prefix `u` or `s` goes before the type suffix: `ub`, `us`, `ui`, `ul`, `sb`, `ss`, `si` and `sl`. Without it, decimal numbers are signed, and hexadecimal and binary numbers are unsigned. An unsigned number must fit the unsigned range of its type, for example 0 to 255 for a byte. The tag holds the signed value with the same bits, so `240ub`, `0xF0ub` and `-16b` give the same `ByteTag`.
+
+`b` is a hexadecimal digit. `0x11b` is the int 283. Write a hexadecimal byte with a signedness prefix: `0x11ub` or `0x11sb`.
+
+In a typed array, an element without a suffix has the type of the array. An element can have a smaller type than the array: `[I; 1b, 2s, 3]` is valid.
+
+The parser also reads the older forms. A number can start with `0`, and `007b` is the byte 7. A literal that is not a valid number, for example `0x` or `1_`, is an unquoted string.
+
+`toSnbt()` writes every number in signed decimal form, which all versions can read.
 
 ## Errors
 

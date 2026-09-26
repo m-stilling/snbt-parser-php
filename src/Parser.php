@@ -214,20 +214,28 @@ class Parser {
 			return $literal === "true" ? 1 : 0;
 		}
 
-		// An integer, optionally carrying any of the integer type suffixes, in
-		// any array type. Decimals and float suffixes are not integers and throw.
-		if (preg_match('/^([+-]?\d+)[bsil]?$/i', $literal, $matches) !== 1) {
-			throw $this->error("Invalid {$type} array element \"{$literal}\"");
-		}
-
-		$value = $this->integerLiteral($literal, $matches[1], match ($type) {
+		$elementType = match ($type) {
 			"B" => ByteTag::class,
 			"I" => IntTag::class,
 			default => LongTag::class,
-		});
+		};
+
+		// An element without a type suffix takes the type of the array. Any
+		// integer suffix is accepted, as long as the value fits the array type.
+		// Decimals and float suffixes are not integers and throw.
+		$tag = $this->classifyNumber($literal, $elementType);
+
+		if (!$tag instanceof IntegerTag) {
+			throw $this->error("Invalid {$type} array element \"{$literal}\"");
+		}
+
+		if ($tag->value < $elementType::MIN || $tag->value > $elementType::MAX) {
+			throw $this->outOfRange($literal, $elementType, false);
+		}
+
 		$this->position = $end;
 
-		return $value;
+		return $tag->value;
 	}
 
 	/**
@@ -305,54 +313,170 @@ class Parser {
 			return new BooleanTag(false);
 		}
 
-		if (preg_match('/^([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)([bBsSiIlLfFdD]?)$/', $literal, $matches) === 1) {
-			$mantissa = $matches[1];
-			$suffix = strtolower($matches[2]);
-
-			return match ($suffix) {
-				"b" => new ByteTag($this->integerLiteral($literal, $mantissa, ByteTag::class)),
-				"s" => new ShortTag($this->integerLiteral($literal, $mantissa, ShortTag::class)),
-				"i" => new IntTag($this->integerLiteral($literal, $mantissa, IntTag::class)),
-				"l" => new LongTag($this->integerLiteral($literal, $mantissa, LongTag::class)),
-				"f" => new FloatTag($this->floatLiteral($literal, $mantissa)),
-				"d" => new DoubleTag($this->floatLiteral($literal, $mantissa)),
-				default => $this->classifyUnsuffixedNumber($literal, $mantissa),
-			};
-		}
-
-		// Anything else is an unquoted string.
-		return new StringTag($literal);
-	}
-
-	protected function classifyUnsuffixedNumber(string $literal, string $mantissa): Tag {
-		if (str_contains($mantissa, ".") || str_contains($mantissa, "e") || str_contains($mantissa, "E")) {
-			return new DoubleTag($this->floatLiteral($literal, $mantissa));
-		}
-
-		return new IntTag($this->integerLiteral($literal, $mantissa, IntTag::class));
+		// Anything that is not a number is an unquoted string.
+		return $this->classifyNumber($literal, IntTag::class) ?? new StringTag($literal);
 	}
 
 	/**
-	 * Convert the digits of an integer literal, checking them against the
-	 * range of $type. The digits may carry a sign and leading zeros, but no
-	 * decimal point or exponent.
+	 * Classify a literal as a number, or return null when it is not one.
+	 * $defaultType is the integer type of an integer without a type suffix.
+	 *
+	 * Integers are decimal, hexadecimal (`0x`) or binary (`0b`), with `_`
+	 * between digits. The type suffix (b/s/i/l) can carry a signedness prefix:
+	 * `u` for unsigned or `s` for signed. Without one, decimal integers are
+	 * signed and hexadecimal and binary integers are unsigned. An unsigned
+	 * value is stored as the signed value with the same bits (240ub is -16b).
+	 *
+	 * @param class-string<IntegerTag> $defaultType
+	 */
+	protected function classifyNumber(string $literal, string $defaultType): ?Tag {
+		// `b` is a hex digit, so a hex byte needs a signedness prefix (0x11ub).
+		if (preg_match('/^([+-]?)0x([0-9a-f]+(?:_+[0-9a-f]+)*)(?:([su]?)([bsil]))?$/i', $literal, $matches) === 1) {
+			return $this->integerTag($literal, $matches, 16, $defaultType);
+		}
+
+		if (preg_match('/^([+-]?)0b([01]+(?:_+[01]+)*)(?:([su]?)([bsil]))?$/i', $literal, $matches) === 1) {
+			return $this->integerTag($literal, $matches, 2, $defaultType);
+		}
+
+		$digits = '\d+(?:_+\d+)*';
+		$pattern = "/^([+-]?)(?:({$digits})(\\.(?:{$digits})?)?|(\\.{$digits}))(e[+-]?{$digits})?(?:([su]?)([bsil])|([fd]))?$/i";
+
+		if (preg_match($pattern, $literal, $matches) !== 1) {
+			return null;
+		}
+
+		[, $sign, $whole, $fraction, $bareFraction, $exponent, $signedness, $integerType, $floatType] = array_pad($matches, 9, "");
+		$isDecimal = $fraction !== "" || $bareFraction !== "" || $exponent !== "";
+		$mantissa = str_replace("_", "", $sign . $whole . $fraction . $bareFraction . $exponent);
+
+		if ($floatType !== "") {
+			return strtolower($floatType) === "f"
+				? new FloatTag($this->floatLiteral($literal, $mantissa))
+				: new DoubleTag($this->floatLiteral($literal, $mantissa));
+		}
+
+		if ($isDecimal) {
+			if ($integerType !== "") {
+				throw $this->error("Invalid integer \"{$literal}\"");
+			}
+
+			return new DoubleTag($this->floatLiteral($literal, $mantissa));
+		}
+
+		return $this->integerTag($literal, [ "", $sign, $whole, $signedness, $integerType ], 10, $defaultType);
+	}
+
+	/**
+	 * @param array<int, string> $parts sign, digits, signedness and type suffix at indexes 1 to 4
+	 * @param class-string<IntegerTag> $defaultType
+	 */
+	protected function integerTag(string $literal, array $parts, int $base, string $defaultType): IntegerTag {
+		[, $sign, $digits, $signedness, $suffix] = array_pad($parts, 5, "");
+
+		$type = match (strtolower($suffix)) {
+			"b" => ByteTag::class,
+			"s" => ShortTag::class,
+			"i" => IntTag::class,
+			"l" => LongTag::class,
+			default => $defaultType,
+		};
+
+		$unsigned = $signedness === "" ? $base !== 10 : strtolower($signedness) === "u";
+		$value = $this->integerValue($literal, $sign === "-", $digits, $base, $unsigned, $type);
+
+		return match ($type) {
+			ByteTag::class => new ByteTag($value),
+			ShortTag::class => new ShortTag($value),
+			IntTag::class => new IntTag($value),
+			default => new LongTag($value),
+		};
+	}
+
+	/**
+	 * Convert integer digits in $base to the value of $type, checking the
+	 * signed or unsigned range. An unsigned value is returned as the signed
+	 * value with the same bits.
 	 *
 	 * @param class-string<IntegerTag> $type
 	 */
-	protected function integerLiteral(string $literal, string $digits, string $type): int {
-		if (preg_match('/^([+-]?)0*(\d+)$/', $digits, $matches) !== 1) {
-			throw $this->error("Invalid integer \"{$literal}\"");
+	protected function integerValue(string $literal, bool $negative, string $digits, int $base, bool $unsigned, string $type): int {
+		$bits = $this->bitsOf($type);
+
+		// Accumulate the magnitude as an unsigned 64-bit number in two 32-bit
+		// halves, so no intermediate value leaves the range of a PHP int.
+		$high = 0;
+		$low = 0;
+
+		foreach (str_split(str_replace("_", "", $digits)) as $digit) {
+			$low = $low * $base + (int) hexdec($digit);
+			$high = $high * $base + ($low >> 32);
+			$low &= 0xFFFFFFFF;
+
+			if ($high > 0xFFFFFFFF) {
+				throw $this->outOfRange($literal, $type, $unsigned);
+			}
 		}
 
-		$normalized = ($matches[1] === "-" && $matches[2] !== "0" ? "-" : "") . $matches[2];
-		$value = (int) $normalized;
+		if ($unsigned) {
+			$fits = $negative
+				? ($high | $low) === 0
+				: $bits === 64 || ($high === 0 && $low < 1 << $bits);
 
-		// A cast that overflows clamps to PHP_INT_MIN/MAX, so compare the text too.
-		if ((string) $value !== $normalized || $value < $type::MIN || $value > $type::MAX) {
-			throw $this->error("Integer \"{$literal}\" is out of range (" . $type::MIN . " to " . $type::MAX . ")");
+			if (!$fits) {
+				throw $this->outOfRange($literal, $type, true);
+			}
+
+			if ($bits === 64) {
+				return ($high << 32) | $low;
+			}
+
+			return $low >= 1 << ($bits - 1) ? $low - (1 << $bits) : $low;
 		}
 
-		return $value;
+		$fits = $bits === 64
+			? $high < 0x80000000 || ($negative && $high === 0x80000000 && $low === 0)
+			: $high === 0 && ($negative ? $low <= 1 << ($bits - 1) : $low < 1 << ($bits - 1));
+
+		if (!$fits) {
+			throw $this->outOfRange($literal, $type, false);
+		}
+
+		$magnitude = ($high << 32) | $low;
+
+		if (!$negative) {
+			return $magnitude;
+		}
+
+		return $magnitude === PHP_INT_MIN ? PHP_INT_MIN : -$magnitude;
+	}
+
+	/**
+	 * @param class-string<IntegerTag> $type
+	 */
+	protected function bitsOf(string $type): int {
+		return match ($type) {
+			ByteTag::class => 8,
+			ShortTag::class => 16,
+			IntTag::class => 32,
+			default => 64,
+		};
+	}
+
+	/**
+	 * @param class-string<IntegerTag> $type
+	 */
+	protected function outOfRange(string $literal, string $type, bool $unsigned): SNBTParseException {
+		$range = $unsigned
+			? "0 to " . match ($this->bitsOf($type)) {
+				8 => "255",
+				16 => "65535",
+				32 => "4294967295",
+				default => "18446744073709551615",
+			}
+			: $type::MIN . " to " . $type::MAX;
+
+		return $this->error("Integer \"{$literal}\" is out of range ({$range})");
 	}
 
 	protected function floatLiteral(string $literal, string $mantissa): float {
