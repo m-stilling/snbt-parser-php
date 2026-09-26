@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser;
 
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\Tag\CompoundTag;
@@ -48,12 +49,12 @@ class SNBTParser {
 	 */
 	public static function intsToUuid(array $ints): string {
 		if (count($ints) !== 4) {
-			throw new \InvalidArgumentException("Array must contain exactly 4 integers.");
+			throw new SNBTInvalidArgumentException("Array must contain exactly 4 integers.");
 		}
 
 		foreach ($ints as $i) {
 			if (!is_int($i)) {
-				throw new \InvalidArgumentException("All elements must be integers.");
+				throw new SNBTInvalidArgumentException("All elements must be integers.");
 			}
 		}
 
@@ -81,13 +82,13 @@ class SNBTParser {
 		$hex = str_replace("-", "", $uuid);
 
 		if (!preg_match('/^[0-9a-fA-F]{32}$/', $hex)) {
-			throw new \InvalidArgumentException("Invalid UUID: {$uuid}");
+			throw new SNBTInvalidArgumentException("Invalid UUID: {$uuid}");
 		}
 
 		$bytes = hex2bin($hex);
 		$unsigned = $bytes === false ? false : unpack("N4", $bytes);
 		if ($unsigned === false) {
-			throw new \InvalidArgumentException("Invalid UUID: {$uuid}");
+			throw new SNBTInvalidArgumentException("Invalid UUID: {$uuid}");
 		}
 
 		$ints = [];

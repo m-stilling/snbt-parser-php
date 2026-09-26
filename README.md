@@ -153,7 +153,7 @@ All three formats produce valid SNBT that parses back to the same tree.
 
 ## Converting UUIDs
 
-Minecraft stores UUIDs as four-integer arrays, e.g. `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`. Four helpers convert between that form and the canonical string. `uuidToInts()` and `uuidToSnbt()` accept the hyphenated form or 32 bare hex digits, in either case. `intsToUuid()` and `toUuid()` throw `InvalidArgumentException` unless the array holds exactly four integers.
+Minecraft stores UUIDs as four-integer arrays, e.g. `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`. Four helpers convert between that form and the canonical string. `uuidToInts()` and `uuidToSnbt()` accept the hyphenated form or 32 bare hex digits, in either case. `intsToUuid()` and `toUuid()` throw `SNBTInvalidArgumentException` unless the array holds exactly four integers. `uuidToInts()` and `uuidToSnbt()` throw it for a string that is not a UUID. `SNBTInvalidArgumentException` extends `InvalidArgumentException`.
 
 ```php
 use Stilling\SNBTParser\SNBTFormat;

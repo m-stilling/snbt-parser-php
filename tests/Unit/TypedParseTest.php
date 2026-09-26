@@ -1,5 +1,6 @@
 <?php
 
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\SNBTParser;
 use Stilling\SNBTParser\Tag\BooleanTag;
 use Stilling\SNBTParser\Tag\ByteArrayTag;
@@ -253,5 +254,12 @@ test("serialization is stable across a re-parse", function () {
 		$twice = SNBTParser::parseTyped($once)->toSnbt();
 
 		expect($twice)->toBe($once);
+	}
+});
+
+test("rejects non-finite floating-point values", function () {
+	foreach ([ INF, -INF, NAN ] as $value) {
+		expect(fn () => new FloatTag($value))->toThrow(SNBTInvalidArgumentException::class)
+			->and(fn () => new DoubleTag($value))->toThrow(SNBTInvalidArgumentException::class);
 	}
 });

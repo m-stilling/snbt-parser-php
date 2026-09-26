@@ -2,12 +2,20 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
+
 /**
  * Shared base for the two floating-point NBT types. Both hold a PHP float (a
  * 64-bit double); the concrete subclass records the original NBT type.
  */
 abstract class FloatingPointTag extends Tag {
+	/**
+	 * @throws SNBTInvalidArgumentException when the value is infinite or NaN, which SNBT cannot write
+	 */
 	public function __construct(public readonly float $value) {
+		if (!is_finite($value)) {
+			throw new SNBTInvalidArgumentException("SNBT cannot represent the non-finite value {$value}.");
+		}
 	}
 
 	public function toPhp(): float {
