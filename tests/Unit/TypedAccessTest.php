@@ -11,7 +11,7 @@ use Stilling\SNBTParser\Tag\ListTag;
 
 test("parses a compound root", function () {
 	expect(SNBTParser::parseCompound("{ a: 1b }"))->toBeInstanceOf(CompoundTag::class)
-		->and(fn () => SNBTParser::parseCompound("[1, 2]"))->toThrow(SNBTParseException::class, "Expected a compound at the root, found ListTag.")
+		->and(fn () => SNBTParser::parseCompound("[1, 2]"))->toThrow(SNBTParseException::class, "Expected a compound at the root, found ListTag at position 0")
 		->and(fn () => SNBTParser::parseCompound("5b"))->toThrow(SNBTParseException::class);
 });
 

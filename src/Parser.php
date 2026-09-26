@@ -408,8 +408,6 @@ class Parser {
 	}
 
 	protected function error(string $message): SNBTParseException {
-		$snippet = substr($this->input, $this->position, 20);
-
-		return new SNBTParseException("{$message} at position {$this->position} near \"{$snippet}\".");
+		return SNBTParseException::at($message, $this->input, $this->position);
 	}
 }

@@ -175,3 +175,25 @@ SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5");
 SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Spaced);
 // "[I; 110787060, 1156138790, -1514210135, 238594805]"
 ```
+
+## Errors
+
+The parser throws `SNBTParseException` when the input is not valid SNBT. The exception gives the location of the error:
+
+- `position` - the byte offset in the input, starting at 0
+- `lineNumber` - the line, starting at 1
+- `columnNumber` - the byte offset in that line, starting at 1
+
+```php
+use Stilling\SNBTParser\Exceptions\SNBTParseException;
+use Stilling\SNBTParser\SNBTParser;
+
+try {
+    SNBTParser::parse("{\n    a: 1,\n    b: @\n}");
+} catch (SNBTParseException $e) {
+    $e->getMessage();  // 'Unexpected character at position 19 near "@\n}".'
+    $e->position;      // 19
+    $e->lineNumber;    // 3
+    $e->columnNumber;  // 8
+}
+```

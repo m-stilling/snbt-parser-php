@@ -301,3 +301,40 @@ test("malformed input throws", function () {
 		->and(fn () => SNBTParser::parse("@invalid"))->toThrow(SNBTParseException::class)
 		->and(fn () => SNBTParser::parse("{ a: }"))->toThrow(SNBTParseException::class);
 });
+
+test("parse errors report the position, line and column", function () {
+	$error = function (string $snbt): SNBTParseException {
+		try {
+			SNBTParser::parse($snbt);
+		} catch (SNBTParseException $e) {
+			return $e;
+		}
+
+		throw new RuntimeException("Expected a parse error.");
+	};
+
+	$single = $error("{ a: 1, b: @ }");
+	expect($single->position)->toBe(11)
+		->and($single->lineNumber)->toBe(1)
+		->and($single->columnNumber)->toBe(12)
+		->and($single->getMessage())->toBe('Unexpected character at position 11 near "@ }".');
+
+	$multi = $error("{\n    a: 1,\n    b: @\n}");
+	expect($multi->position)->toBe(19)
+		->and($multi->lineNumber)->toBe(3)
+		->and($multi->columnNumber)->toBe(8);
+
+	expect((new SNBTParseException("manual"))->position)->toBeNull();
+
+	$root = null;
+
+	try {
+		SNBTParser::parseCompound("\n  [1]");
+	} catch (SNBTParseException $e) {
+		$root = $e;
+	}
+
+	expect($root?->position)->toBe(3)
+		->and($root?->lineNumber)->toBe(2)
+		->and($root?->columnNumber)->toBe(3);
+});

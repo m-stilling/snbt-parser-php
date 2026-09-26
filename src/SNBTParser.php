@@ -38,7 +38,11 @@ class SNBTParser {
 		$tag = self::parseTyped($input);
 
 		if (!$tag instanceof CompoundTag) {
-			throw new SNBTParseException("Expected a compound at the root, found " . SNBTTagException::shortName($tag::class) . ".");
+			throw SNBTParseException::at(
+				"Expected a compound at the root, found " . SNBTTagException::shortName($tag::class),
+				$input,
+				strspn($input, " \t\n\r"),
+			);
 		}
 
 		return $tag;
