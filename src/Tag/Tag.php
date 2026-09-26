@@ -6,15 +6,14 @@ use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\SNBTFormat;
 
 /**
- * Base class for every parsed SNBT value. Unlike the v1 JSON round-trip, the
- * concrete subclass preserves the original NBT type (byte vs int, float vs
- * double, the three typed arrays, ...), which `toSnbt()` can faithfully emit.
+ * Base class for every SNBT value. The concrete subclass records the NBT type
+ * (byte vs int, float vs double, the three typed arrays, ...), which
+ * `toSnbt()` writes back out.
  */
 abstract class Tag {
 	/**
-	 * The value as a native PHP type, collapsing NBT type distinctions the same
-	 * way the v1 parser did (every integer type becomes int, every floating type
-	 * becomes float).
+	 * The value as a native PHP type. Every integer type becomes int and every
+	 * floating-point type becomes float.
 	 *
 	 * @return array<mixed>|int|float|string|bool
 	 */

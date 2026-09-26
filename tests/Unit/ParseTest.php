@@ -106,7 +106,7 @@ test("string ending in backslash", function () {
 });
 
 test("string with special characters", function () {
-	// Real control characters and backslashes must be escaped to stay valid JSON.
+	// Raw control characters pass through; escaped backslashes are decoded.
 	expect(SNBTParser::parse("\"tab\there\""))->toEqual("tab\there")
 		->and(SNBTParser::parse("\"line1\nline2\""))->toEqual("line1\nline2")
 		->and(SNBTParser::parse('"back\\\\slash"'))->toEqual('back\\slash')
@@ -295,9 +295,7 @@ test("empty typed array", function () {
 });
 
 test("malformed input throws", function () {
-	// Empty input fails when decoding the (empty) transposed JSON.
 	expect(fn () => SNBTParser::parse(""))->toThrow(SNBTParseException::class)
-		// Unrecognisable input fails while walking the token chain.
 		->and(fn () => SNBTParser::parse("@invalid"))->toThrow(SNBTParseException::class)
 		->and(fn () => SNBTParser::parse("{ a: }"))->toThrow(SNBTParseException::class);
 });

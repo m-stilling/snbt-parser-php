@@ -97,8 +97,8 @@ test("rejects invalid array elements", function () {
 });
 
 test("accepts unsuffixed and case-insensitive suffixed array elements", function () {
-	// Any integer suffix is accepted in any array type (locked by the v1 tests),
-	// matched case-insensitively, as elsewhere.
+	// Any integer suffix is accepted in any array type, matched
+	// case-insensitively, as elsewhere.
 	expect(SNBTParser::parse("[B;1,2B]"))->toBe([ 1, 2 ])
 		->and(SNBTParser::parse("[L;3,4L]"))->toBe([ 3, 4 ])
 		->and(SNBTParser::parse("[I;1b,2s,3l]"))->toBe([ 1, 2, 3 ])

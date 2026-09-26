@@ -12,9 +12,9 @@ use Stilling\SNBTParser\Tag\Tag;
 
 class SNBTParser {
 	/**
-	 * Parse SNBT into native PHP types. NBT type distinctions are collapsed the
-	 * same way as before (integers become int, decimals become float); use
-	 * {@see self::parseTyped()} when you need to keep them.
+	 * Parse SNBT into native PHP types. Every integer type becomes int and every
+	 * floating-point type becomes float; use {@see self::parseTyped()} to keep
+	 * the NBT types.
 	 *
 	 * @return array<mixed>|float|int|string|bool
 	 */

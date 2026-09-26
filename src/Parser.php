@@ -22,10 +22,10 @@ use Stilling\SNBTParser\Tag\Tag;
 
 /**
  * A single-pass, recursive-descent SNBT parser that builds a typed tag tree
- * directly from the input — no JSON round-trip. Structural characters are all
- * ASCII, so the input is scanned byte by byte; multibyte string contents pass
- * through untouched (UTF-8 continuation bytes never collide with the ASCII
- * delimiters), which is why no mbstring functions are needed.
+ * directly from the input. Structural characters are all ASCII, so the input
+ * is scanned byte by byte; multibyte string contents pass through untouched
+ * (UTF-8 continuation bytes never collide with the ASCII delimiters), which is
+ * why no mbstring functions are needed.
  */
 class Parser {
 	protected int $position = 0;
@@ -214,9 +214,8 @@ class Parser {
 			return $literal === "true" ? 1 : 0;
 		}
 
-		// An integer, optionally carrying any of the integer type suffixes (the
-		// parser has always been lenient about the exact suffix). Decimals and
-		// float suffixes are not integers and throw.
+		// An integer, optionally carrying any of the integer type suffixes, in
+		// any array type. Decimals and float suffixes are not integers and throw.
 		if (preg_match('/^([+-]?\d+)[bsil]?$/i', $literal, $matches) !== 1) {
 			throw $this->error("Invalid {$type} array element \"{$literal}\"");
 		}
