@@ -8,11 +8,14 @@ use Stilling\SNBTParser\SNBTFormat;
 /**
  * A compound (`{...}`) — an ordered, keyed map of tags.
  *
+ * PHP stores a numeric-string key such as "0" as an int key, so `entries` and
+ * `toPhp()` can hold int keys. Iterating the tag always yields string keys.
+ *
  * @implements \IteratorAggregate<string, Tag>
  */
 class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 	/**
-	 * @param array<string, Tag> $entries
+	 * @param array<array-key, Tag> $entries
 	 */
 	public function __construct(public readonly array $entries) {
 	}
@@ -118,14 +121,16 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 	}
 
 	/**
-	 * @return \ArrayIterator<string, Tag>
+	 * @return \Iterator<string, Tag>
 	 */
-	public function getIterator(): \ArrayIterator {
-		return new \ArrayIterator($this->entries);
+	public function getIterator(): \Iterator {
+		foreach ($this->entries as $key => $tag) {
+			yield (string) $key => $tag;
+		}
 	}
 
 	/**
-	 * @return array<string, mixed>
+	 * @return array<array-key, mixed>
 	 */
 	public function toPhp(): array {
 		$result = [];
@@ -145,7 +150,7 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 		$parts = [];
 
 		foreach ($this->entries as $key => $tag) {
-			$parts[] = $this->serializeKey($key) . $format->keyValueSeparator() . $tag->render($format, $depth + 1);
+			$parts[] = $this->serializeKey((string) $key) . $format->keyValueSeparator() . $tag->render($format, $depth + 1);
 		}
 
 		return "{" . $format->afterOpen($depth)

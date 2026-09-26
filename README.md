@@ -86,6 +86,8 @@ Every value becomes a `Tag` subclass under `Stilling\SNBTParser\Tag`: `ByteTag`,
 
 `CompoundTag` additionally provides `get(string $key): ?Tag` and `has(string $key): bool`, and `ListTag` provides `get(int $index): ?Tag`. The container tags are `Countable` and iterable (`count($tag)`, `foreach ($tag as $key => $value)`), and expose their contents as readonly `entries` / `items` / `values` properties.
 
+Iterating a `CompoundTag` yields string keys. PHP stores a numeric-string key such as `"0"` as an `int` key, so `entries` and `toPhp()` can hold `int` keys.
+
 `parseTyped()` returns `Tag`. Use `parseCompound()` when the root must be a compound, for example the output of `data get`. It returns `CompoundTag`, and it throws `SNBTParseException` when the root is a different tag.
 
 ### Reading typed values

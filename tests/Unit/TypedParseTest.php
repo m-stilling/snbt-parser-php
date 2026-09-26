@@ -263,3 +263,19 @@ test("rejects non-finite floating-point values", function () {
 			->and(fn () => new DoubleTag($value))->toThrow(SNBTInvalidArgumentException::class);
 	}
 });
+
+test("iterating a compound yields string keys, also for numeric keys", function () {
+	$tag = SNBTParser::parseCompound('{"0": 1b, "12": 2b, a: 3b}');
+
+	$keys = [];
+
+	foreach ($tag as $key => $value) {
+		$keys[] = $key;
+	}
+
+	expect($keys)->toBe([ "0", "12", "a" ])
+		->and($tag->get("0"))->toBeInstanceOf(ByteTag::class)
+		->and($tag->getInt("12"))->toBe(2)
+		->and($tag->toSnbt())->toBe('{0:1b,12:2b,a:3b}')
+		->and($tag->toPhp())->toBe([ 0 => 1, 12 => 2, "a" => 3 ]);
+});
