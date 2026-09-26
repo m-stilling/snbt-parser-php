@@ -2,10 +2,12 @@
 
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\BooleanTag;
 use Stilling\SNBTParser\Tag\ByteArrayTag;
 use Stilling\SNBTParser\Tag\ByteTag;
 use Stilling\SNBTParser\Tag\DoubleTag;
 use Stilling\SNBTParser\Tag\FloatTag;
+use Stilling\SNBTParser\Tag\IntArrayTag;
 use Stilling\SNBTParser\Tag\IntTag;
 use Stilling\SNBTParser\Tag\LongTag;
 use Stilling\SNBTParser\Tag\ShortTag;
@@ -144,4 +146,36 @@ test("rejects a comma without an element before it", function () {
 	foreach ([ "{,}", "[,]", "{a: 1,,}", "[1,,]", "[1,,2]", "[I;1,]", "[B;1b,]" ] as $snbt) {
 		expect(fn () => SNBTParser::parse($snbt))->toThrow(SNBTParseException::class);
 	}
+});
+
+test("evaluates bool()", function () {
+	expectTag("bool(true)", BooleanTag::class, true);
+	expectTag("bool(false)", BooleanTag::class, false);
+	expectTag("bool(1)", BooleanTag::class, true);
+	expectTag("bool(0b)", BooleanTag::class, false);
+	expectTag("bool( -5l )", BooleanTag::class, true);
+	expectTag("bool(0.0)", BooleanTag::class, false);
+	expectTag("bool(0.5f)", BooleanTag::class, true);
+
+	expect(SNBTParser::parseTyped("{a: bool(1)}")->toSnbt())->toBe("{a:true}");
+});
+
+test("evaluates uuid()", function () {
+	$ints = [ 110787060, 1156138790, -1514210135, 238594805 ];
+
+	expectTag('uuid("069a79f4-44e9-4726-a5be-fca90e38aaf5")', IntArrayTag::class, $ints);
+	expectTag("uuid('069A79F444E94726A5BEFCA90E38AAF5')", IntArrayTag::class, $ints);
+
+	expect(SNBTParser::parse('{UUID: uuid("069a79f4-44e9-4726-a5be-fca90e38aaf5"), n: 1}'))->toBe([ "UUID" => $ints, "n" => 1 ]);
+});
+
+test("rejects invalid operations", function () {
+	expect(fn () => SNBTParser::parse('bool("x")'))->toThrow(SNBTParseException::class, "bool() needs a number or a boolean")
+		->and(fn () => SNBTParser::parse("bool()"))->toThrow(SNBTParseException::class, "bool() takes exactly one argument")
+		->and(fn () => SNBTParser::parse("bool(1, 2)"))->toThrow(SNBTParseException::class, "bool() takes exactly one argument")
+		->and(fn () => SNBTParser::parse("uuid(1)"))->toThrow(SNBTParseException::class, "uuid() needs a string")
+		->and(fn () => SNBTParser::parse('uuid("nope")'))->toThrow(SNBTParseException::class, 'Invalid UUID "nope"')
+		->and(fn () => SNBTParser::parse("{a: foo(1)}"))->toThrow(SNBTParseException::class, 'Unknown operation "foo" at position 4')
+		->and(fn () => SNBTParser::parse("bool(1"))->toThrow(SNBTParseException::class)
+		->and(fn () => SNBTParser::parse("bool (1)"))->toThrow(SNBTParseException::class);
 });

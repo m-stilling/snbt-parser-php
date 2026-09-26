@@ -6,8 +6,9 @@ use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\SNBTFormat;
 
 /**
- * An ordered list of tags (`[...]`). NBT lists are homogeneous; this parser does
- * not enforce that, leaving validation to the caller.
+ * An ordered list of tags (`[...]`). Since Minecraft 1.21.5 a list can mix tag
+ * types; older versions need every item to have the same type. This class does
+ * not check either rule, leaving validation to the caller.
  *
  * @implements \IteratorAggregate<int, Tag>
  */

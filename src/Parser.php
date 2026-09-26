@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser;
 
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\Tag\BooleanTag;
 use Stilling\SNBTParser\Tag\ByteArrayTag;
@@ -9,6 +10,7 @@ use Stilling\SNBTParser\Tag\ByteTag;
 use Stilling\SNBTParser\Tag\CompoundTag;
 use Stilling\SNBTParser\Tag\DoubleTag;
 use Stilling\SNBTParser\Tag\FloatTag;
+use Stilling\SNBTParser\Tag\FloatingPointTag;
 use Stilling\SNBTParser\Tag\IntArrayTag;
 use Stilling\SNBTParser\Tag\IntTag;
 use Stilling\SNBTParser\Tag\IntegerTag;
@@ -313,11 +315,93 @@ class Parser {
 		}
 
 		$end = $this->position;
+		$literal = substr($this->input, $start, $end - $start);
+
+		if ($this->currentIs("(")) {
+			return $this->parseOperation($literal, $start);
+		}
+
 		$this->position = $start;
-		$tag = $this->classifyLiteral(substr($this->input, $start, $end - $start));
+		$tag = $this->classifyLiteral($literal);
 		$this->position = $end;
 
 		return $tag;
+	}
+
+	/**
+	 * Parse an operation call such as `bool(1)` or `uuid("...")`, with the
+	 * position on the opening parenthesis. Errors about the operation itself
+	 * point at its name.
+	 */
+	protected function parseOperation(string $name, int $start): Tag {
+		$this->position++; // consume "("
+		$arguments = [];
+
+		$this->skipWhitespace();
+
+		if (!$this->currentIs(")")) {
+			while (true) {
+				$arguments[] = $this->parseValue();
+				$this->skipWhitespace();
+
+				$char = $this->currentOrFail("',' or ')'");
+
+				if ($char === ",") {
+					$this->position++;
+
+					continue;
+				}
+
+				if ($char === ")") {
+					break;
+				}
+
+				throw $this->error("Expected ',' or ')'");
+			}
+		}
+
+		$this->position++; // consume ")"
+		$end = $this->position;
+		$this->position = $start;
+
+		if ($name !== "bool" && $name !== "uuid") {
+			throw $this->error("Unknown operation \"{$name}\"");
+		}
+
+		if (count($arguments) !== 1) {
+			throw $this->error("{$name}() takes exactly one argument");
+		}
+
+		$tag = $name === "bool" ? $this->boolOperation($arguments[0]) : $this->uuidOperation($arguments[0]);
+		$this->position = $end;
+
+		return $tag;
+	}
+
+	/**
+	 * `bool(x)`: a boolean stays as it is; a number is true unless it is zero.
+	 */
+	protected function boolOperation(Tag $argument): BooleanTag {
+		return match (true) {
+			$argument instanceof BooleanTag => $argument,
+			$argument instanceof IntegerTag, $argument instanceof FloatingPointTag => new BooleanTag($argument->value != 0),
+			default => throw $this->error("bool() needs a number or a boolean"),
+		};
+	}
+
+	/**
+	 * `uuid("...")`: the UUID as the four-integer array that Minecraft stores.
+	 */
+	protected function uuidOperation(Tag $argument): IntArrayTag {
+		if (!$argument instanceof StringTag) {
+			throw $this->error("uuid() needs a string");
+		}
+
+		try {
+			return new IntArrayTag(SNBTParser::uuidToInts($argument->value));
+		} catch (SNBTInvalidArgumentException) {
+			throw $this->error("Invalid UUID \"{$argument->value}\"");
+		}
 	}
 
 	protected function classifyLiteral(string $literal): Tag {

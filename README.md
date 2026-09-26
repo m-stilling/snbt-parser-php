@@ -226,19 +226,21 @@ SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Space
 
 ## Supported syntax
 
-The parser reads the SNBT that Minecraft writes, for example the output of `data get`:
+The parser reads the SNBT that Minecraft writes, for example the output of `data get`, and the SNBT syntax that Java Edition 1.21.5 added for commands and data packs:
 
 - compounds, lists, and the typed arrays `[B;...]`, `[I;...]` and `[L;...]`
+- lists with items of different types, for example `[1, "a", {b: 2}]`
 - numbers with the suffixes `b`, `s`, `i`, `l`, `f` and `d`, in either case, and numbers without a suffix (`1` is an int, `1.0` and `1e3` are doubles)
 - the number forms from Minecraft 1.21.5, described in [Numbers](#numbers)
 - one trailing comma after the last entry of a compound or the last item of a list, for example `{a: 1,}` and `[1, 2,]`. Typed arrays do not accept a trailing comma.
 - `true` and `false`
 - strings in double or single quotes, with the escapes described in [Strings](#strings)
 - unquoted strings and keys, made of `A-Z`, `a-z`, `0-9`, `_`, `-`, `.` and `+`
+- the operations `bool(...)` and `uuid(...)`, described in [Operations](#operations)
 
-The parser does not read the syntax that Minecraft 1.21.5 added for commands and data packs:
+Input that the parser read before 1.21.5 support was added gives the same result, with one exception: an unquoted value that is now a valid number, for example `0x1F`, `0b101`, `1_000` or `5ub`, is now a number and not a string. Minecraft writes every string value in quotes, so its output is not affected. Keys are never numbers, so `{0x1F: 1}` has the key `"0x1F"`.
 
-- operations such as `bool(...)` and `uuid(...)` cause `SNBTParseException`
+The parser does not read the list index syntax `[0: a, 1: b]`.
 
 ### Numbers
 
@@ -282,6 +284,24 @@ The parser writes each code point to the result as UTF-8. A `\u` high surrogate 
 `\N{...}` needs the `intl` extension. Without it, `\N{...}` causes `SNBTParseException`.
 
 `toSnbt()` writes only the escapes `\\`, `\"`, `\n`, `\r` and `\t`.
+
+### Operations
+
+An operation is a name directly followed by arguments in parentheses. The parser evaluates it and returns the result as a tag:
+
+| Operation | Argument | Result |
+| --- | --- | --- |
+| `bool(x)` | a boolean or a number | `BooleanTag`: a boolean stays the same, and a number is `true` unless it is zero |
+| `uuid(s)` | a string that holds a UUID | `IntArrayTag` with the four integers that Minecraft stores |
+
+```php
+use Stilling\SNBTParser\SNBTParser;
+
+SNBTParser::parse('{Invulnerable: bool(1), UUID: uuid("069a79f4-44e9-4726-a5be-fca90e38aaf5")}');
+// ["Invulnerable" => true, "UUID" => [110787060, 1156138790, -1514210135, 238594805]]
+```
+
+Any other name, a wrong number of arguments, or an argument of the wrong type causes `SNBTParseException`. `toSnbt()` writes the result, not the operation: `bool(1)` becomes `true`.
 
 ## Errors
 
