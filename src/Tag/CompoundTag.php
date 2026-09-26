@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\SNBTFormat;
 
 /**
@@ -22,6 +23,73 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 
 	public function has(string $key): bool {
 		return isset($this->entries[$key]);
+	}
+
+	/**
+	 * @template T of Tag
+	 *
+	 * @param class-string<T> $class
+	 *
+	 * @return T
+	 *
+	 * @throws SNBTTagException when the key is missing or holds another tag type
+	 */
+	public function getAs(string $key, string $class): Tag {
+		$tag = $this->require($key);
+
+		if (!$tag instanceof $class) {
+			throw SNBTTagException::wrongType($this->location($key), SNBTTagException::shortName($class), $tag);
+		}
+
+		return $tag;
+	}
+
+	public function getCompound(string $key): CompoundTag {
+		return $this->getAs($key, CompoundTag::class);
+	}
+
+	public function getList(string $key): ListTag {
+		return $this->getAs($key, ListTag::class);
+	}
+
+	public function getString(string $key): string {
+		return $this->getAs($key, StringTag::class)->value;
+	}
+
+	/**
+	 * Accepts any integer tag: byte, short, int or long.
+	 */
+	public function getInt(string $key): int {
+		return $this->getAs($key, IntegerTag::class)->value;
+	}
+
+	/**
+	 * Accepts either floating-point tag: float or double.
+	 */
+	public function getFloat(string $key): float {
+		return $this->getAs($key, FloatingPointTag::class)->value;
+	}
+
+	/**
+	 * Accepts `true`/`false` and bytes, since Minecraft writes booleans as
+	 * `1b`/`0b`. Any non-zero byte is true.
+	 */
+	public function getBool(string $key): bool {
+		$tag = $this->require($key);
+
+		return match (true) {
+			$tag instanceof BooleanTag => $tag->value,
+			$tag instanceof ByteTag => $tag->value !== 0,
+			default => throw SNBTTagException::wrongType($this->location($key), "BooleanTag or ByteTag", $tag),
+		};
+	}
+
+	protected function require(string $key): Tag {
+		return $this->get($key) ?? throw SNBTTagException::missing($this->location($key));
+	}
+
+	protected function location(string $key): string {
+		return "key \"{$key}\"";
 	}
 
 	public function count(): int {

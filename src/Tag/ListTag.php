@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\SNBTFormat;
 
 /**
@@ -19,6 +20,73 @@ class ListTag extends Tag implements \Countable, \IteratorAggregate {
 
 	public function get(int $index): ?Tag {
 		return $this->items[$index] ?? null;
+	}
+
+	/**
+	 * @template T of Tag
+	 *
+	 * @param class-string<T> $class
+	 *
+	 * @return T
+	 *
+	 * @throws SNBTTagException when the index is out of range or holds another tag type
+	 */
+	public function getAs(int $index, string $class): Tag {
+		$tag = $this->require($index);
+
+		if (!$tag instanceof $class) {
+			throw SNBTTagException::wrongType($this->location($index), SNBTTagException::shortName($class), $tag);
+		}
+
+		return $tag;
+	}
+
+	public function getCompound(int $index): CompoundTag {
+		return $this->getAs($index, CompoundTag::class);
+	}
+
+	public function getList(int $index): ListTag {
+		return $this->getAs($index, ListTag::class);
+	}
+
+	public function getString(int $index): string {
+		return $this->getAs($index, StringTag::class)->value;
+	}
+
+	/**
+	 * Accepts any integer tag: byte, short, int or long.
+	 */
+	public function getInt(int $index): int {
+		return $this->getAs($index, IntegerTag::class)->value;
+	}
+
+	/**
+	 * Accepts either floating-point tag: float or double.
+	 */
+	public function getFloat(int $index): float {
+		return $this->getAs($index, FloatingPointTag::class)->value;
+	}
+
+	/**
+	 * Accepts `true`/`false` and bytes, since Minecraft writes booleans as
+	 * `1b`/`0b`. Any non-zero byte is true.
+	 */
+	public function getBool(int $index): bool {
+		$tag = $this->require($index);
+
+		return match (true) {
+			$tag instanceof BooleanTag => $tag->value,
+			$tag instanceof ByteTag => $tag->value !== 0,
+			default => throw SNBTTagException::wrongType($this->location($index), "BooleanTag or ByteTag", $tag),
+		};
+	}
+
+	protected function require(int $index): Tag {
+		return $this->get($index) ?? throw SNBTTagException::missing($this->location($index));
+	}
+
+	protected function location(int $index): string {
+		return "index {$index}";
 	}
 
 	public function count(): int {

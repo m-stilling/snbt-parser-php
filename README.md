@@ -70,7 +70,7 @@ SNBTParser::parse('{z: -11, x: -40, id: "minecraft:chest", y: 73, Items: [{count
 use Stilling\SNBTParser\SNBTParser;
 use Stilling\SNBTParser\Tag\ByteTag;
 
-$tag = SNBTParser::parseTyped('{ Slot: 3b, id: "minecraft:shield" }');
+$tag = SNBTParser::parseCompound('{ Slot: 3b, id: "minecraft:shield" }');
 
 $tag->get("Slot") instanceof ByteTag; // true
 $tag->get("id")->toPhp();             // "minecraft:shield"
@@ -85,6 +85,39 @@ Every value becomes a `Tag` subclass under `Stilling\SNBTParser\Tag`: `ByteTag`,
 - `toSnbt()` - the value re-serialized back to SNBT, preserving its type
 
 `CompoundTag` additionally provides `get(string $key): ?Tag` and `has(string $key): bool`, and `ListTag` provides `get(int $index): ?Tag`. The container tags are `Countable` and iterable (`count($tag)`, `foreach ($tag as $key => $value)`), and expose their contents as readonly `entries` / `items` / `values` properties.
+
+`parseTyped()` returns `Tag`. Use `parseCompound()` when the root must be a compound, for example the output of `data get`. It returns `CompoundTag`, and it throws `SNBTParseException` when the root is a different tag.
+
+### Reading typed values
+
+`CompoundTag` and `ListTag` have typed getters. They take a key (compound) or an index (list). Each getter throws `SNBTTagException` when the entry is missing or holds a different tag type.
+
+| Getter | Returns | Accepts |
+| --- | --- | --- |
+| `getString()` | `string` | `StringTag` |
+| `getInt()` | `int` | `ByteTag`, `ShortTag`, `IntTag`, `LongTag` |
+| `getFloat()` | `float` | `FloatTag`, `DoubleTag` |
+| `getBool()` | `bool` | `BooleanTag`, and `ByteTag` (non-zero is `true`) |
+| `getCompound()` | `CompoundTag` | `CompoundTag` |
+| `getList()` | `ListTag` | `ListTag` |
+| `getAs($key, $class)` | an instance of `$class` | `$class` and its subclasses |
+
+```php
+use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\IntArrayTag;
+
+$player = SNBTParser::parseCompound('{Health: 20.0f, OnGround: 1b, Pos: [-78.5d, 65.0d, -19.5d], abilities: {flying: 0b}, UUID: [I; 110787060, 1156138790, -1514210135, 238594805]}');
+
+$player->getFloat("Health");                          // 20.0
+$player->getBool("OnGround");                         // true
+$player->getList("Pos")->getFloat(1);                 // 65.0
+$player->getCompound("abilities")->getBool("flying"); // false
+$player->getAs("UUID", IntArrayTag::class)->toUuid(); // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+
+$player->getInt("Health"); // throws SNBTTagException: Expected IntegerTag at key "Health", found FloatTag.
+```
+
+The getters have PHPStan generics, so static analysis knows the return type of each call.
 
 ### Formatting the output
 
@@ -125,11 +158,12 @@ Minecraft stores UUIDs as four-integer arrays, e.g. `UUID: [I; 110787060, 115613
 ```php
 use Stilling\SNBTParser\SNBTFormat;
 use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\IntArrayTag;
 
 SNBTParser::intsToUuid([110787060, 1156138790, -1514210135, 238594805]);
 // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
-SNBTParser::parseTyped('{UUID: [I; 110787060, 1156138790, -1514210135, 238594805]}')->get("UUID")->toUuid();
+SNBTParser::parseCompound('{UUID: [I; 110787060, 1156138790, -1514210135, 238594805]}')->getAs("UUID", IntArrayTag::class)->toUuid();
 // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
 SNBTParser::uuidToInts("069a79f4-44e9-4726-a5be-fca90e38aaf5");

@@ -2,6 +2,9 @@
 
 namespace Stilling\SNBTParser;
 
+use Stilling\SNBTParser\Exceptions\SNBTParseException;
+use Stilling\SNBTParser\Exceptions\SNBTTagException;
+use Stilling\SNBTParser\Tag\CompoundTag;
 use Stilling\SNBTParser\Tag\IntArrayTag;
 use Stilling\SNBTParser\Tag\Tag;
 
@@ -22,6 +25,22 @@ class SNBTParser {
 	 */
 	public static function parseTyped(string $input): Tag {
 		return (new Parser($input))->parse();
+	}
+
+	/**
+	 * Parse SNBT whose root must be a compound, such as the output of
+	 * `data get entity` or `data get block`.
+	 *
+	 * @throws SNBTParseException when the input is malformed or its root is not a compound
+	 */
+	public static function parseCompound(string $input): CompoundTag {
+		$tag = self::parseTyped($input);
+
+		if (!$tag instanceof CompoundTag) {
+			throw new SNBTParseException("Expected a compound at the root, found " . SNBTTagException::shortName($tag::class) . ".");
+		}
+
+		return $tag;
 	}
 
 	/**
