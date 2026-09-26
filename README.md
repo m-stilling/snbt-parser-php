@@ -8,6 +8,8 @@ Turn [Minecraft SNBT](https://minecraft.wiki/w/NBT_format#SNBT_format) data into
 composer require stilling/snbt-parser
 ```
 
+The package requires PHP 8.3 or later.
+
 > [!TIP]
 > Need to fetch this data from a server first? [`stilling/minecraft-rcon`](https://packagist.org/packages/stilling/minecraft-rcon) is a lightweight Minecraft RCON client that handles multi-packet responses - run commands like `data get ...` and feed the output straight into this parser.
 
@@ -61,6 +63,8 @@ SNBTParser::parse('{z: -11, x: -40, id: "minecraft:chest", y: 73, Items: [{count
     ],
 ]
 ```
+
+`parse()` turns an empty compound `{}` and an empty list `[]` into the same empty PHP array. Use `parseTyped()` to tell them apart.
 
 ## Preserving NBT types
 
@@ -220,7 +224,31 @@ SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Space
 // "[I; 110787060, 1156138790, -1514210135, 238594805]"
 ```
 
+## Supported syntax
+
+The parser reads the SNBT that Minecraft writes, for example the output of `data get`:
+
+- compounds, lists, and the typed arrays `[B;...]`, `[I;...]` and `[L;...]`
+- numbers with the suffixes `b`, `s`, `i`, `l`, `f` and `d`, in either case, and numbers without a suffix (`1` is an int, `1.0` and `1e3` are doubles)
+- `true` and `false`
+- strings in double or single quotes, with the escapes `\\`, `\n`, `\r` and `\t`, and a backslash before the quote character that opens the string
+- unquoted strings and keys, made of `A-Z`, `a-z`, `0-9`, `_`, `-`, `.` and `+`
+
+The parser does not read the syntax that Minecraft 1.21.5 added for commands and data packs:
+
+- `0x1F`, `0b101`, `1_000` and signedness suffixes such as `5ub` become unquoted strings
+- the escapes `\x`, `\u`, `\U` and `\N{...}` cause `SNBTParseException`
+- operations such as `bool(...)` and `uuid(...)` cause `SNBTParseException`
+
 ## Errors
+
+Every exception from this package implements `Stilling\SNBTParser\Exceptions\SNBTException`. Catch that interface to catch all of them.
+
+| Exception | Extends | Thrown when |
+| --- | --- | --- |
+| `SNBTParseException` | `RuntimeException` | the input is not valid SNBT, or `parseCompound()` finds a different root tag |
+| `SNBTTagException` | `UnexpectedValueException` | a typed getter finds no entry or an entry of a different tag type, or `ListTag::with()` gets an index out of range |
+| `SNBTInvalidArgumentException` | `InvalidArgumentException` | a UUID helper, `Tag::fromPhp()` or a tag constructor gets a value that it cannot use |
 
 The parser throws `SNBTParseException` when the input is not valid SNBT. This includes these numbers:
 
