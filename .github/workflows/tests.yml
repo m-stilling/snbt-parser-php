@@ -44,6 +44,9 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Validate composer.json
+        run: composer validate --strict
+
       - name: Install dependencies
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --ansi
 
