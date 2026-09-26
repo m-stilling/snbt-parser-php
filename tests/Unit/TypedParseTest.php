@@ -279,3 +279,13 @@ test("iterating a compound yields string keys, also for numeric keys", function 
 		->and($tag->toSnbt())->toBe('{0:1b,12:2b,a:3b}')
 		->and($tag->toPhp())->toBe([ 0 => 1, 12 => 2, "a" => 3 ]);
 });
+
+test("tag constructors reject values outside the range of their type", function () {
+	expect(fn () => new ByteTag(128))->toThrow(SNBTInvalidArgumentException::class, "Value 128 is out of range for ByteTag (-128 to 127).")
+		->and(fn () => new ShortTag(-32_769))->toThrow(SNBTInvalidArgumentException::class)
+		->and(fn () => new IntTag(2_147_483_648))->toThrow(SNBTInvalidArgumentException::class)
+		->and(fn () => new ByteArrayTag([ 1, 200 ]))->toThrow(SNBTInvalidArgumentException::class, "Value 200 at index 1 is out of range for ByteArrayTag (-128 to 127).")
+		->and(fn () => new IntArrayTag([ 2_147_483_648 ]))->toThrow(SNBTInvalidArgumentException::class)
+		->and((new LongTag(PHP_INT_MAX))->value)->toBe(PHP_INT_MAX)
+		->and((new LongArrayTag([ PHP_INT_MIN ]))->values)->toBe([ PHP_INT_MIN ]);
+});

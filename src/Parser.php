@@ -11,6 +11,7 @@ use Stilling\SNBTParser\Tag\DoubleTag;
 use Stilling\SNBTParser\Tag\FloatTag;
 use Stilling\SNBTParser\Tag\IntArrayTag;
 use Stilling\SNBTParser\Tag\IntTag;
+use Stilling\SNBTParser\Tag\IntegerTag;
 use Stilling\SNBTParser\Tag\ListTag;
 use Stilling\SNBTParser\Tag\LongArrayTag;
 use Stilling\SNBTParser\Tag\LongTag;
@@ -202,23 +203,32 @@ class Parser {
 			throw $this->error("Expected an array element");
 		}
 
-		$literal = substr($this->input, $start, $this->position - $start);
+		$end = $this->position;
+		$this->position = $start;
+		$literal = substr($this->input, $start, $end - $start);
 
 		// Vanilla accepts the boolean keywords inside byte arrays, as bytes.
 		if ($type === "B" && ($literal === "true" || $literal === "false")) {
+			$this->position = $end;
+
 			return $literal === "true" ? 1 : 0;
 		}
 
 		// An integer, optionally carrying any of the integer type suffixes (the
-		// parser has always been lenient about the exact suffix); the int cast
-		// stops at it. Decimals and float suffixes are not integers and throw.
-		if (preg_match('/^[+-]?\d+[bsil]?$/i', $literal) !== 1) {
-			$this->position = $start;
-
+		// parser has always been lenient about the exact suffix). Decimals and
+		// float suffixes are not integers and throw.
+		if (preg_match('/^([+-]?\d+)[bsil]?$/i', $literal, $matches) !== 1) {
 			throw $this->error("Invalid {$type} array element \"{$literal}\"");
 		}
 
-		return (int) $literal;
+		$value = $this->integerLiteral($literal, $matches[1], match ($type) {
+			"B" => ByteTag::class,
+			"I" => IntTag::class,
+			default => LongTag::class,
+		});
+		$this->position = $end;
+
+		return $value;
 	}
 
 	/**
@@ -279,7 +289,12 @@ class Parser {
 			throw $this->error("Unexpected character");
 		}
 
-		return $this->classifyLiteral(substr($this->input, $start, $this->position - $start));
+		$end = $this->position;
+		$this->position = $start;
+		$tag = $this->classifyLiteral(substr($this->input, $start, $end - $start));
+		$this->position = $end;
+
+		return $tag;
 	}
 
 	protected function classifyLiteral(string $literal): Tag {
@@ -296,13 +311,13 @@ class Parser {
 			$suffix = strtolower($matches[2]);
 
 			return match ($suffix) {
-				"b" => new ByteTag((int) $mantissa),
-				"s" => new ShortTag((int) $mantissa),
-				"i" => new IntTag((int) $mantissa),
-				"l" => new LongTag((int) $mantissa),
-				"f" => new FloatTag((float) $mantissa),
-				"d" => new DoubleTag((float) $mantissa),
-				default => $this->classifyUnsuffixedNumber($mantissa),
+				"b" => new ByteTag($this->integerLiteral($literal, $mantissa, ByteTag::class)),
+				"s" => new ShortTag($this->integerLiteral($literal, $mantissa, ShortTag::class)),
+				"i" => new IntTag($this->integerLiteral($literal, $mantissa, IntTag::class)),
+				"l" => new LongTag($this->integerLiteral($literal, $mantissa, LongTag::class)),
+				"f" => new FloatTag($this->floatLiteral($literal, $mantissa)),
+				"d" => new DoubleTag($this->floatLiteral($literal, $mantissa)),
+				default => $this->classifyUnsuffixedNumber($literal, $mantissa),
 			};
 		}
 
@@ -310,12 +325,45 @@ class Parser {
 		return new StringTag($literal);
 	}
 
-	protected function classifyUnsuffixedNumber(string $mantissa): Tag {
+	protected function classifyUnsuffixedNumber(string $literal, string $mantissa): Tag {
 		if (str_contains($mantissa, ".") || str_contains($mantissa, "e") || str_contains($mantissa, "E")) {
-			return new DoubleTag((float) $mantissa);
+			return new DoubleTag($this->floatLiteral($literal, $mantissa));
 		}
 
-		return new IntTag((int) $mantissa);
+		return new IntTag($this->integerLiteral($literal, $mantissa, IntTag::class));
+	}
+
+	/**
+	 * Convert the digits of an integer literal, checking them against the
+	 * range of $type. The digits may carry a sign and leading zeros, but no
+	 * decimal point or exponent.
+	 *
+	 * @param class-string<IntegerTag> $type
+	 */
+	protected function integerLiteral(string $literal, string $digits, string $type): int {
+		if (preg_match('/^([+-]?)0*(\d+)$/', $digits, $matches) !== 1) {
+			throw $this->error("Invalid integer \"{$literal}\"");
+		}
+
+		$normalized = ($matches[1] === "-" && $matches[2] !== "0" ? "-" : "") . $matches[2];
+		$value = (int) $normalized;
+
+		// A cast that overflows clamps to PHP_INT_MIN/MAX, so compare the text too.
+		if ((string) $value !== $normalized || $value < $type::MIN || $value > $type::MAX) {
+			throw $this->error("Integer \"{$literal}\" is out of range (" . $type::MIN . " to " . $type::MAX . ")");
+		}
+
+		return $value;
+	}
+
+	protected function floatLiteral(string $literal, string $mantissa): float {
+		$value = (float) $mantissa;
+
+		if (!is_finite($value)) {
+			throw $this->error("Number \"{$literal}\" is out of range");
+		}
+
+		return $value;
 	}
 
 	protected function readQuotedString(): string {

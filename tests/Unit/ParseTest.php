@@ -338,3 +338,51 @@ test("parse errors report the position, line and column", function () {
 		->and($root?->lineNumber)->toBe(2)
 		->and($root?->columnNumber)->toBe(3);
 });
+
+test("rejects integers outside the range of their type", function () {
+	$cases = [
+		"128b", "-129b", "32768s", "-32769s", "2147483648", "-2147483649", "2147483648i",
+		"9223372036854775808l", "-9223372036854775809l", "99999999999999999999l",
+		"[B;128]", "[B;-129b]", "[I;2147483648]", "[L;9223372036854775808]",
+	];
+
+	foreach ($cases as $snbt) {
+		expect(fn () => SNBTParser::parse($snbt))->toThrow(SNBTParseException::class, "out of range");
+	}
+});
+
+test("accepts integers at the limits of their type", function () {
+	expect(SNBTParser::parse("127b"))->toBe(127)
+		->and(SNBTParser::parse("-128b"))->toBe(-128)
+		->and(SNBTParser::parse("9223372036854775807l"))->toBe(PHP_INT_MAX)
+		->and(SNBTParser::parse("-9223372036854775808l"))->toBe(PHP_INT_MIN)
+		->and(SNBTParser::parse("[L;-9223372036854775808l]"))->toBe([ PHP_INT_MIN ])
+		->and(SNBTParser::parse("007b"))->toBe(7)
+		->and(SNBTParser::parse("-0b"))->toBe(0)
+		->and(SNBTParser::parse("+5s"))->toBe(5);
+});
+
+test("rejects decimals with an integer suffix", function () {
+	foreach ([ "1.5b", "1.0s", "1e3i", ".5l" ] as $snbt) {
+		expect(fn () => SNBTParser::parse($snbt))->toThrow(SNBTParseException::class, "Invalid integer");
+	}
+});
+
+test("rejects floating-point numbers that overflow", function () {
+	foreach ([ "1e400", "1e400d", "-1e400f" ] as $snbt) {
+		expect(fn () => SNBTParser::parse($snbt))->toThrow(SNBTParseException::class, "out of range");
+	}
+});
+
+test("range errors point at the start of the literal", function () {
+	try {
+		SNBTParser::parse("{ a: 300b }");
+	} catch (SNBTParseException $e) {
+		expect($e->position)->toBe(5)
+			->and($e->getMessage())->toBe('Integer "300b" is out of range (-128 to 127) at position 5 near "300b }".');
+
+		return;
+	}
+
+	throw new RuntimeException("Expected a parse error.");
+});

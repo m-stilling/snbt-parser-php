@@ -33,7 +33,7 @@ abstract class Tag {
 		return match (true) {
 			$value instanceof Tag => $value,
 			is_bool($value) => new BooleanTag($value),
-			is_int($value) => $value >= -2_147_483_648 && $value <= 2_147_483_647 ? new IntTag($value) : new LongTag($value),
+			is_int($value) => $value >= IntTag::MIN && $value <= IntTag::MAX ? new IntTag($value) : new LongTag($value),
 			is_float($value) => new DoubleTag($value),
 			is_string($value) => new StringTag($value),
 			is_array($value) && array_is_list($value) => new ListTag(array_map(fn (mixed $item): Tag => self::fromPhp($item), $value)),

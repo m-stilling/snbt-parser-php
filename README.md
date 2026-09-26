@@ -222,7 +222,15 @@ SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Space
 
 ## Errors
 
-The parser throws `SNBTParseException` when the input is not valid SNBT. The exception gives the location of the error:
+The parser throws `SNBTParseException` when the input is not valid SNBT. This includes these numbers:
+
+- an integer outside the range of its type, for example `300b` or `2147483648`
+- a decimal with an integer suffix, for example `1.5b`
+- a floating-point number that overflows, for example `1e400`
+
+The tag constructors also check the range. `new ByteTag(300)` and `new IntArrayTag([2147483648])` throw `SNBTInvalidArgumentException`. The integer tags give their range as the constants `MIN` and `MAX`, for example `ByteTag::MIN` and `ByteTag::MAX`. `FloatTag` and `DoubleTag` do not accept `INF` or `NAN`.
+
+`SNBTParseException` gives the location of the error:
 
 - `position` - the byte offset in the input, starting at 0
 - `lineNumber` - the line, starting at 1

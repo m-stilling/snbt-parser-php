@@ -7,6 +7,7 @@ use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\Tag\CompoundTag;
 use Stilling\SNBTParser\Tag\IntArrayTag;
+use Stilling\SNBTParser\Tag\IntTag;
 use Stilling\SNBTParser\Tag\Tag;
 
 class SNBTParser {
@@ -57,8 +58,8 @@ class SNBTParser {
 		}
 
 		foreach ($ints as $i) {
-			if (!is_int($i)) {
-				throw new SNBTInvalidArgumentException("All elements must be integers.");
+			if (!is_int($i) || $i < IntTag::MIN || $i > IntTag::MAX) {
+				throw new SNBTInvalidArgumentException("All elements must be 32-bit integers.");
 			}
 		}
 

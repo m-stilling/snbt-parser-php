@@ -18,7 +18,8 @@ test("ints to uuid", function () {
 		->and(fn () => SNBTParser::intsToUuid([]))->toThrow(SNBTInvalidArgumentException::class)
 		->and(fn () => SNBTParser::intsToUuid([ 1, 2, 3 ]))->toThrow(SNBTInvalidArgumentException::class)
 		->and(fn () => SNBTParser::intsToUuid([ 1, 2, 3, "4" ]))->toThrow(SNBTInvalidArgumentException::class)
-		->and(fn () => SNBTParser::intsToUuid([ ...$ints, 1 ]))->toThrow(SNBTInvalidArgumentException::class);
+		->and(fn () => SNBTParser::intsToUuid([ ...$ints, 1 ]))->toThrow(SNBTInvalidArgumentException::class)
+		->and(fn () => SNBTParser::intsToUuid([ 1, 2, 3, 2_147_483_648 ]))->toThrow(SNBTInvalidArgumentException::class);
 });
 
 test("uuid to ints", function () {

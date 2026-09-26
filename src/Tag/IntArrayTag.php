@@ -15,6 +15,10 @@ class IntArrayTag extends NumberArrayTag {
 		return SNBTParser::intsToUuid($this->values);
 	}
 
+	public function elementType(): string {
+		return IntTag::class;
+	}
+
 	protected function bracketType(): string {
 		return "I";
 	}
