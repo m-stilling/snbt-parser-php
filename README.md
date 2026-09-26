@@ -232,12 +232,11 @@ The parser reads the SNBT that Minecraft writes, for example the output of `data
 - numbers with the suffixes `b`, `s`, `i`, `l`, `f` and `d`, in either case, and numbers without a suffix (`1` is an int, `1.0` and `1e3` are doubles)
 - the number forms from Minecraft 1.21.5, described in [Numbers](#numbers)
 - `true` and `false`
-- strings in double or single quotes, with the escapes `\\`, `\n`, `\r` and `\t`, and a backslash before the quote character that opens the string
+- strings in double or single quotes, with the escapes described in [Strings](#strings)
 - unquoted strings and keys, made of `A-Z`, `a-z`, `0-9`, `_`, `-`, `.` and `+`
 
 The parser does not read the syntax that Minecraft 1.21.5 added for commands and data packs:
 
-- the escapes `\x`, `\u`, `\U` and `\N{...}` cause `SNBTParseException`
 - operations such as `bool(...)` and `uuid(...)` cause `SNBTParseException`
 
 ### Numbers
@@ -262,6 +261,26 @@ In a typed array, an element without a suffix has the type of the array. An elem
 The parser also reads the older forms. A number can start with `0`, and `007b` is the byte 7. A literal that is not a valid number, for example `0x` or `1_`, is an unquoted string.
 
 `toSnbt()` writes every number in signed decimal form, which all versions can read.
+
+### Strings
+
+A quoted string can contain these escapes:
+
+| Escape | Result |
+| --- | --- |
+| `\\` | `\` |
+| `\"` and `\'` | the quote, in either kind of string |
+| `\b`, `\f`, `\n`, `\r`, `\s`, `\t` | backspace, form feed, line feed, carriage return, space, tab |
+| `\x41` | the code point with 2 hex digits |
+| `A` | the code point with 4 hex digits |
+| `\U0001F600` | the code point with 8 hex digits |
+| `\N{Snowman}` | the Unicode character with that name |
+
+The parser writes each code point to the result as UTF-8. A `\u` high surrogate followed by a `\u` low surrogate gives one character, for example `😀` gives 😀. An unpaired surrogate causes `SNBTParseException`.
+
+`\N{...}` needs the `intl` extension. Without it, `\N{...}` causes `SNBTParseException`.
+
+`toSnbt()` writes only the escapes `\\`, `\"`, `\n`, `\r` and `\t`.
 
 ## Errors
 

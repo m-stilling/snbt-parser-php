@@ -503,7 +503,7 @@ class Parser {
 			$this->position++;
 
 			if ($char === "\\") {
-				$result .= $this->readEscape($quote);
+				$result .= $this->readEscape();
 
 				continue;
 			}
@@ -516,7 +516,13 @@ class Parser {
 		}
 	}
 
-	protected function readEscape(string $quote): string {
+	/**
+	 * Decode the escape sequence after a backslash. Both quote characters can
+	 * be escaped in either kind of string. The code point escapes `\x`, `\u`
+	 * and `\U` and the named escape `\N{...}` are written to the result as
+	 * UTF-8.
+	 */
+	protected function readEscape(): string {
 		if ($this->eof()) {
 			throw $this->error("Unterminated escape sequence");
 		}
@@ -526,11 +532,95 @@ class Parser {
 
 		return match ($char) {
 			"\\" => "\\",
-			$quote => $quote,
+			'"' => '"',
+			"'" => "'",
+			"b" => "\x08",
+			"f" => "\f",
 			"n" => "\n",
 			"r" => "\r",
+			"s" => " ",
 			"t" => "\t",
+			"x" => $this->encodeUtf8($this->readCodePoint(2)),
+			"u" => $this->encodeUtf8($this->readCodePoint(4)),
+			"U" => $this->encodeUtf8($this->readCodePoint(8)),
+			"N" => $this->encodeUtf8($this->readNamedCodePoint()),
 			default => throw $this->error("Invalid escape sequence \"\\{$char}\""),
+		};
+	}
+
+	/**
+	 * Read $digits hex digits after `\x`, `\u` or `\U`. A high surrogate
+	 * followed by a `\u` low surrogate combines into one code point, the way a
+	 * Java string holds characters outside the Basic Multilingual Plane.
+	 */
+	protected function readCodePoint(int $digits): int {
+		$hex = substr($this->input, $this->position, $digits);
+
+		if (strlen($hex) !== $digits || preg_match('/^[0-9a-f]+$/i', $hex) !== 1) {
+			throw $this->error("Expected {$digits} hex digits in escape sequence");
+		}
+
+		$this->position += $digits;
+		$codePoint = (int) hexdec($hex);
+
+		if ($codePoint >= 0xD800 && $codePoint <= 0xDBFF && preg_match('/\G\\\\u(d[c-f][0-9a-f]{2})/Ai', $this->input, $matches, 0, $this->position) === 1) {
+			$this->position += 6;
+
+			return 0x10000 + (($codePoint - 0xD800) << 10) + ((int) hexdec($matches[1]) - 0xDC00);
+		}
+
+		if ($codePoint >= 0xD800 && $codePoint <= 0xDFFF) {
+			throw $this->error("Unpaired surrogate in escape sequence");
+		}
+
+		if ($codePoint > 0x10FFFF) {
+			throw $this->error("Code point in escape sequence is out of range");
+		}
+
+		return $codePoint;
+	}
+
+	/**
+	 * Read `{name}` after `\N` and look the Unicode character name up. The
+	 * lookup needs the intl extension.
+	 */
+	protected function readNamedCodePoint(): int {
+		$end = strpos($this->input, "}", $this->position);
+
+		if (!$this->currentIs("{") || $end === false) {
+			throw $this->error("Expected '{name}' after \\N");
+		}
+
+		$name = substr($this->input, $this->position + 1, $end - $this->position - 1);
+
+		if (!class_exists(\IntlChar::class)) {
+			throw $this->error("The \\N{...} escape needs the intl extension");
+		}
+
+		/** @var int|null $codePoint The stubs omit the null that an unknown name returns. */
+		$codePoint = \IntlChar::charFromName($name);
+
+		if ($codePoint === null) {
+			throw $this->error("Unknown character name \"{$name}\"");
+		}
+
+		$this->position = $end + 1;
+
+		return $codePoint;
+	}
+
+	protected function encodeUtf8(int $codePoint): string {
+		return match (true) {
+			$codePoint < 0x80 => chr($codePoint),
+			$codePoint < 0x800 => chr(0xC0 | ($codePoint >> 6))
+				. chr(0x80 | ($codePoint & 0x3F)),
+			$codePoint < 0x10000 => chr(0xE0 | ($codePoint >> 12))
+				. chr(0x80 | (($codePoint >> 6) & 0x3F))
+				. chr(0x80 | ($codePoint & 0x3F)),
+			default => chr(0xF0 | ($codePoint >> 18))
+				. chr(0x80 | (($codePoint >> 12) & 0x3F))
+				. chr(0x80 | (($codePoint >> 6) & 0x3F))
+				. chr(0x80 | ($codePoint & 0x3F)),
 		};
 	}
 

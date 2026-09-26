@@ -17,6 +17,9 @@
 	"require": {
 		"php": "^8.3"
 	},
+	"suggest": {
+		"ext-intl": "Needed to parse the \\N{name} string escape"
+	},
 	"require-dev": {
 		"pestphp/pest": "^4.0",
 		"phpstan/phpstan": "^2.0"
