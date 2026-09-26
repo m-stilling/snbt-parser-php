@@ -709,15 +709,19 @@ class Parser {
 		return $codePoint;
 	}
 
+	/**
+	 * Encode a code point in 0 to 0x10FFFF. The masks keep each byte in the
+	 * 0 to 255 range that chr() accepts; they do not change a valid code point.
+	 */
 	protected function encodeUtf8(int $codePoint): string {
 		return match (true) {
-			$codePoint < 0x80 => chr($codePoint),
+			$codePoint < 0x80 => chr($codePoint & 0x7F),
 			$codePoint < 0x800 => chr(0xC0 | ($codePoint >> 6))
 				. chr(0x80 | ($codePoint & 0x3F)),
 			$codePoint < 0x10000 => chr(0xE0 | ($codePoint >> 12))
 				. chr(0x80 | (($codePoint >> 6) & 0x3F))
 				. chr(0x80 | ($codePoint & 0x3F)),
-			default => chr(0xF0 | ($codePoint >> 18))
+			default => chr((0xF0 | ($codePoint >> 18)) & 0xFF)
 				. chr(0x80 | (($codePoint >> 12) & 0x3F))
 				. chr(0x80 | (($codePoint >> 6) & 0x3F))
 				. chr(0x80 | ($codePoint & 0x3F)),
