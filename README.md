@@ -231,6 +231,7 @@ The parser reads the SNBT that Minecraft writes, for example the output of `data
 - compounds, lists, and the typed arrays `[B;...]`, `[I;...]` and `[L;...]`
 - numbers with the suffixes `b`, `s`, `i`, `l`, `f` and `d`, in either case, and numbers without a suffix (`1` is an int, `1.0` and `1e3` are doubles)
 - the number forms from Minecraft 1.21.5, described in [Numbers](#numbers)
+- one trailing comma after the last entry of a compound or the last item of a list, for example `{a: 1,}` and `[1, 2,]`. Typed arrays do not accept a trailing comma.
 - `true` and `false`
 - strings in double or single quotes, with the escapes described in [Strings](#strings)
 - unquoted strings and keys, made of `A-Z`, `a-z`, `0-9`, `_`, `-`, `.` and `+`

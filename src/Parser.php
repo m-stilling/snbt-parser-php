@@ -84,6 +84,14 @@ class Parser {
 
 			if ($char === ",") {
 				$this->position++;
+				$this->skipWhitespace();
+
+				// One trailing comma after an entry is allowed.
+				if ($this->currentIs("}")) {
+					$this->position++;
+
+					break;
+				}
 
 				continue;
 			}
@@ -269,6 +277,14 @@ class Parser {
 
 			if ($char === ",") {
 				$this->position++;
+				$this->skipWhitespace();
+
+				// One trailing comma after an item is allowed.
+				if ($this->currentIs("]")) {
+					$this->position++;
+
+					break;
+				}
 
 				continue;
 			}

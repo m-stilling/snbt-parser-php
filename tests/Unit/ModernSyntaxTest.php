@@ -132,3 +132,16 @@ test("writes unsigned values back as signed decimal", function () {
 	expect(SNBTParser::parseTyped("{a: 240ub, b: 0xFFFFFFFF, c: [B; 0xFFub]}")->toSnbt())
 		->toBe("{a:-16b,b:-1,c:[B;-1b]}");
 });
+
+test("accepts one trailing comma in compounds and lists", function () {
+	expect(SNBTParser::parse("{a: 1, b: 2,}"))->toBe([ "a" => 1, "b" => 2 ])
+		->and(SNBTParser::parse("{ a: 1 , }"))->toBe([ "a" => 1 ])
+		->and(SNBTParser::parse("[1, 2,]"))->toBe([ 1, 2 ])
+		->and(SNBTParser::parse("[ [1,], {a: [],}, ]"))->toBe([ [ 1 ], [ "a" => [] ] ]);
+});
+
+test("rejects a comma without an element before it", function () {
+	foreach ([ "{,}", "[,]", "{a: 1,,}", "[1,,]", "[1,,2]", "[I;1,]", "[B;1b,]" ] as $snbt) {
+		expect(fn () => SNBTParser::parse($snbt))->toThrow(SNBTParseException::class);
+	}
+});
