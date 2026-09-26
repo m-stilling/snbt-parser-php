@@ -119,6 +119,48 @@ $player->getInt("Health"); // throws SNBTTagException: Expected IntegerTag at ke
 
 The getters have PHPStan generics, so static analysis knows the return type of each call.
 
+### Building and changing tags
+
+`Tag::fromPhp()` builds a tag tree from native PHP values:
+
+| PHP value | Tag |
+| --- | --- |
+| `bool` | `BooleanTag` |
+| `int` | `IntTag`, or `LongTag` outside the 32-bit range |
+| `float` | `DoubleTag` |
+| `string` | `StringTag` |
+| list array | `ListTag` |
+| other array | `CompoundTag` |
+| `Tag` | the same tag |
+
+An empty array becomes an empty `ListTag`. Use `new CompoundTag([])` for an empty compound. Other values, such as `null` and objects, cause `SNBTInvalidArgumentException`. To get a different NBT type, put a tag in the array:
+
+```php
+use Stilling\SNBTParser\Tag\ByteTag;
+use Stilling\SNBTParser\Tag\Tag;
+
+Tag::fromPhp(["Slot" => new ByteTag(0), "id" => "minecraft:lead", "count" => 1])->toSnbt();
+// '{Slot:0b,id:"minecraft:lead",count:1}'
+```
+
+Tags are immutable. These methods return a changed copy:
+
+- `CompoundTag::with(string $key, Tag $tag)` - sets a key. An existing key keeps its position. A new key goes last.
+- `CompoundTag::without(string $key)` - removes a key. A missing key is not an error.
+- `ListTag::with(int $index, Tag $tag)` - replaces an item. It throws `SNBTTagException` when the index is out of range.
+- `ListTag::withAppended(Tag $tag)` - adds an item at the end.
+- `ListTag::without(int $index)` - removes an item. The later items move down by one.
+
+```php
+use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\ByteTag;
+
+$item = SNBTParser::parseCompound('{Slot: 3b, id: "minecraft:shield", count: 1}');
+
+$item->with("Slot", new ByteTag(4))->without("count")->toSnbt();
+// '{Slot:4b,id:"minecraft:shield"}'
+```
+
 ### Formatting the output
 
 `toSnbt()` accepts an `SNBTFormat` to control its layout. It defaults to `Compact`:

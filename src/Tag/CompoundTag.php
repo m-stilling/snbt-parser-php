@@ -84,6 +84,27 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 		};
 	}
 
+	/**
+	 * Return a copy with $key set to $tag. An existing key keeps its position;
+	 * a new key goes last.
+	 */
+	public function with(string $key, Tag $tag): CompoundTag {
+		$entries = $this->entries;
+		$entries[$key] = $tag;
+
+		return new CompoundTag($entries);
+	}
+
+	/**
+	 * Return a copy without $key. A missing key is not an error.
+	 */
+	public function without(string $key): CompoundTag {
+		$entries = $this->entries;
+		unset($entries[$key]);
+
+		return new CompoundTag($entries);
+	}
+
 	protected function require(string $key): Tag {
 		return $this->get($key) ?? throw SNBTTagException::missing($this->location($key));
 	}

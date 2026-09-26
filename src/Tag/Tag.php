@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\SNBTFormat;
 
 /**
@@ -18,6 +19,28 @@ abstract class Tag {
 	 * @return array<mixed>|int|float|string|bool
 	 */
 	abstract public function toPhp(): array|int|float|string|bool;
+
+	/**
+	 * Build a tag tree from native PHP values: bool becomes BooleanTag, int
+	 * becomes IntTag (LongTag outside the 32-bit range), float becomes
+	 * DoubleTag, string becomes StringTag, a list becomes ListTag and any other
+	 * array becomes CompoundTag. An empty array is a list. Tags pass through
+	 * unchanged, so a tree can mix native values and specific tag types.
+	 *
+	 * @throws SNBTInvalidArgumentException for any other value, such as null or an object
+	 */
+	public static function fromPhp(mixed $value): Tag {
+		return match (true) {
+			$value instanceof Tag => $value,
+			is_bool($value) => new BooleanTag($value),
+			is_int($value) => $value >= -2_147_483_648 && $value <= 2_147_483_647 ? new IntTag($value) : new LongTag($value),
+			is_float($value) => new DoubleTag($value),
+			is_string($value) => new StringTag($value),
+			is_array($value) && array_is_list($value) => new ListTag(array_map(fn (mixed $item): Tag => self::fromPhp($item), $value)),
+			is_array($value) => new CompoundTag(array_map(fn (mixed $item): Tag => self::fromPhp($item), $value)),
+			default => throw new SNBTInvalidArgumentException("Cannot convert a value of type " . get_debug_type($value) . " to a tag."),
+		};
+	}
 
 	/**
 	 * Re-serialize this tag back to SNBT, retaining its NBT type.

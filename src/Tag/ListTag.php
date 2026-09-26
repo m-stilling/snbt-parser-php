@@ -81,6 +81,38 @@ class ListTag extends Tag implements \Countable, \IteratorAggregate {
 		};
 	}
 
+	/**
+	 * Return a copy with the item at $index replaced by $tag.
+	 *
+	 * @throws SNBTTagException when the index is out of range
+	 */
+	public function with(int $index, Tag $tag): ListTag {
+		$this->require($index);
+
+		$items = $this->items;
+		$items[$index] = $tag;
+
+		return new ListTag(array_values($items));
+	}
+
+	/**
+	 * Return a copy with $tag added after the last item.
+	 */
+	public function withAppended(Tag $tag): ListTag {
+		return new ListTag([ ...$this->items, $tag ]);
+	}
+
+	/**
+	 * Return a copy without the item at $index; later items move down by one.
+	 * An index out of range is not an error.
+	 */
+	public function without(int $index): ListTag {
+		$items = $this->items;
+		unset($items[$index]);
+
+		return new ListTag(array_values($items));
+	}
+
 	protected function require(int $index): Tag {
 		return $this->get($index) ?? throw SNBTTagException::missing($this->location($index));
 	}
