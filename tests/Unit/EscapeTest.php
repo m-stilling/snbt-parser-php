@@ -2,6 +2,7 @@
 
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\StringTag;
 
 test("decodes the character escapes", function () {
 	expect(SNBTParser::parse('"a\bb"'))->toBe("a\x08b")
@@ -44,9 +45,26 @@ test("rejects malformed escapes", function () {
 	}
 });
 
+test("reads the strings that a 1.21.4 server writes", function () {
+	// `data get storage` output from a 1.21.4 server: control characters are
+	// written raw, and only the backslash and the quote are escaped.
+	expect(SNBTParser::parse("\"a\nb\""))->toBe("a\nb")
+		->and(SNBTParser::parse("\"a\rb\""))->toBe("a\rb")
+		->and(SNBTParser::parse("\"a\tb\""))->toBe("a\tb")
+		->and(SNBTParser::parse("\"a\x01b\""))->toBe("a\x01b")
+		->and(SNBTParser::parse("'a\\\\b\"c\\'d'"))->toBe("a\\b\"c'd");
+});
+
+test("1.21.4 rejects the escapes that 1.21.5 added, so toSnbt() does not write them", function () {
+	// 1.21.4 answered `Invalid escape sequence` for \n, \t and \x01, and accepted
+	// raw control characters.
+	expect((new StringTag("a\nb\tc\rd\x01e"))->toSnbt())->toBe("\"a\nb\tc\rd\x01e\"");
+});
+
 test("reads the strings that a 1.21.5 server writes", function () {
 	// `data get storage` output from a 1.21.5 server for values set with raw
 	// control characters, and for a value holding a backslash and both quotes.
+	// A 26.3 server wrote the same output.
 	expect(SNBTParser::parse('"a\nb"'))->toBe("a\nb")
 		->and(SNBTParser::parse('"a\rb"'))->toBe("a\rb")
 		->and(SNBTParser::parse('"a\tb"'))->toBe("a\tb")
