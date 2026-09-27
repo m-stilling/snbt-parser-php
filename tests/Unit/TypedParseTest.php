@@ -263,6 +263,19 @@ test("rejects non-finite floating-point values", function () {
 	}
 });
 
+test("reads and writes the unquoted keys that servers accept", function () {
+	// 1.21.4, 1.21.5 and 26.3 accepted each of these keys unquoted in `data
+	// modify` and wrote them back unquoted in `data get`.
+	$keys = [ "0", "12", "1abc", "1.5", "0b1", "0x1F", "-x", "-5", ".x", "+x", "true", "x-1", "_x", "a.b+c-d" ];
+
+	foreach ($keys as $key) {
+		$tag = SNBTParser::parseCompound("{{$key}: 1b}");
+
+		expect($tag->has($key))->toBeTrue()
+			->and($tag->toSnbt())->toBe("{{$key}:1b}");
+	}
+});
+
 test("iterating a compound yields string keys, also for numeric keys", function () {
 	$tag = SNBTParser::parseCompound('{"0": 1b, "12": 2b, a: 3b}');
 

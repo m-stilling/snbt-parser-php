@@ -242,6 +242,13 @@ Input that the parser read before 1.21.5 support was added gives the same result
 
 The parser does not read the list index syntax `[0: a, 1: b]`.
 
+The parser and `toSnbt()` do not check what a Minecraft version accepts. `toSnbt()` writes the tree as it is, and the server reports any input that it does not support. For example:
+
+- Minecraft 1.21.4 rejects a list with items of different types. 1.21.5 and later accept it.
+- Minecraft rejects an empty key, such as `{"": 1b}`.
+
+`toSnbt()` writes a key without quotes when the key contains only `A-Z`, `a-z`, `0-9`, `_`, `-`, `.` and `+`, for example `{0:1b}`, `{-x:1b}` or `{true:1b}`. Minecraft 1.21.4, 1.21.5 and 26.3 accept these keys.
+
 ### Numbers
 
 The parser reads the number forms that Minecraft 1.21.5 added:
