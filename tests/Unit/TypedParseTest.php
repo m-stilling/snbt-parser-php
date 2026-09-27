@@ -223,14 +223,13 @@ test("every format re-parses to the same tree", function () {
 	}
 });
 
-test("escapes control characters when serializing", function () {
-	$bs = chr(92);
-
-	// A real newline/tab in the value must be written back escaped, not raw.
-	expect((new StringTag("a\nb"))->toSnbt())->toBe('"a' . $bs . 'nb"')
-		->and((new StringTag("x\ty"))->toSnbt())->toBe('"x' . $bs . 'ty"')
-		// ...and the escaped form round-trips to the original bytes.
-		->and(SNBTParser::parseTyped((new StringTag("a\nb"))->toSnbt())->toPhp())->toBe("a\nb");
+test("writes control characters raw when serializing", function () {
+	// Versions before 1.21.5 reject escapes such as \n but read raw control
+	// characters; 1.21.5 reads both.
+	expect((new StringTag("a\nb"))->toSnbt())->toBe("\"a\nb\"")
+		->and((new StringTag("x\ty\rz\x01"))->toSnbt())->toBe("\"x\ty\rz\x01\"")
+		->and((new StringTag('a\\b"c'))->toSnbt())->toBe('"a\\\\b\"c"')
+		->and(SNBTParser::parseTyped((new StringTag("a\nb\t\"\\"))->toSnbt())->toPhp())->toBe("a\nb\t\"\\");
 });
 
 test("round-trips double precision through serialization", function () {

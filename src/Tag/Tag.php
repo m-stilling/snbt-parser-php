@@ -55,16 +55,11 @@ abstract class Tag {
 	abstract protected function render(SNBTFormat $format, int $depth): string;
 
 	/**
-	 * Quote a string for SNBT output, escaping the sequences the parser decodes:
-	 * the backslash, the double quote, and the \n / \r / \t control characters.
+	 * Quote a string for SNBT output, escaping only the backslash and the double
+	 * quote. Control characters stay raw: every Minecraft version reads them
+	 * inside quotes, but versions before 1.21.5 reject escapes such as \n.
 	 */
 	protected static function quote(string $value): string {
-		$escaped = str_replace(
-			["\\", '"', "\n", "\r", "\t"],
-			['\\\\', '\\"', '\\n', '\\r', '\\t'],
-			$value,
-		);
-
-		return '"' . $escaped . '"';
+		return '"' . str_replace(["\\", '"'], ['\\\\', '\\"'], $value) . '"';
 	}
 }

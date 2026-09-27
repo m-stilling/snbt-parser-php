@@ -43,3 +43,13 @@ test("rejects malformed escapes", function () {
 		expect(fn () => SNBTParser::parse($snbt))->toThrow(SNBTParseException::class);
 	}
 });
+
+test("reads the strings that a 1.21.5 server writes", function () {
+	// `data get storage` output from a 1.21.5 server for values set with raw
+	// control characters, and for a value holding a backslash and both quotes.
+	expect(SNBTParser::parse('"a\nb"'))->toBe("a\nb")
+		->and(SNBTParser::parse('"a\rb"'))->toBe("a\rb")
+		->and(SNBTParser::parse('"a\tb"'))->toBe("a\tb")
+		->and(SNBTParser::parse('"a\x01b"'))->toBe("a\x01b")
+		->and(SNBTParser::parse("'a\\\\b\"c\\'d'"))->toBe("a\\b\"c'd");
+});
