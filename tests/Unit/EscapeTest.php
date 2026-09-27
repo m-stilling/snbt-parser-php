@@ -19,10 +19,10 @@ test("escapes either quote in either kind of string", function () {
 
 test("decodes code point escapes to UTF-8", function () {
 	expect(SNBTParser::parse('"\x41\xe9"'))->toBe("Aé")
-		->and(SNBTParser::parse('"Hé€"'))->toBe("Hé€")
+		->and(SNBTParser::parse('"\u0048\u00E9\u20AC"'))->toBe("Hé€")
 		->and(SNBTParser::parse('"\U0001F600"'))->toBe("😀")
-		->and(SNBTParser::parse('"😀"'))->toBe("😀")
-		->and(SNBTParser::parse('{"A": 1}'))->toBe([ "A" => 1 ]);
+		->and(SNBTParser::parse('"\uD83D\uDE00"'))->toBe("😀")
+		->and(SNBTParser::parse('{"\u0041": 1}'))->toBe([ "A" => 1 ]);
 });
 
 test("keeps an escaped backslash before u as literal text", function () {
