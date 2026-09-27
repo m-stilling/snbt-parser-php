@@ -140,12 +140,12 @@ class ListTag extends Tag implements \Countable, \IteratorAggregate {
 		return array_map(fn (Tag $item): array|int|float|string|bool => $item->toPhp(), $this->items);
 	}
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		if ($this->items === []) {
 			return "[]";
 		}
 
-		$items = array_map(fn (Tag $item): string => $item->render($format, $depth + 1), $this->items);
+		$items = array_map(fn (Tag $item): string => $item->render($format, $depth + 1, $escapeControlCharacters), $this->items);
 
 		return "[" . $format->afterOpen($depth)
 			. implode($format->itemSeparator($depth), $items)

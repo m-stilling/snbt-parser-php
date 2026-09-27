@@ -16,7 +16,7 @@ class BooleanTag extends Tag {
 		return $this->value;
 	}
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		return $this->value ? "true" : "false";
 	}
 }

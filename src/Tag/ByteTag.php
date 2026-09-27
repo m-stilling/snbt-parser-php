@@ -9,7 +9,7 @@ class ByteTag extends IntegerTag {
 
 	public const MAX = 127;
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		return $this->value . "b";
 	}
 }

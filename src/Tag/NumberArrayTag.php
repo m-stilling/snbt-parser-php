@@ -58,7 +58,7 @@ abstract class NumberArrayTag extends Tag implements \Countable, \IteratorAggreg
 		return $this->values;
 	}
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		if ($this->values === []) {
 			return "[" . $this->bracketType() . ";]";
 		}

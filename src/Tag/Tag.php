@@ -43,23 +43,50 @@ abstract class Tag {
 
 	/**
 	 * Re-serialize this tag back to SNBT, retaining its NBT type.
+	 *
+	 * By default control characters inside strings stay raw, which every
+	 * Minecraft version reads. With $escapeControlCharacters they are written as
+	 * escapes, so a string never breaks the output across lines; versions before
+	 * 1.21.5 reject those escapes.
 	 */
-	public function toSnbt(SNBTFormat $format = SNBTFormat::Compact): string {
-		return $this->render($format, 0);
+	public function toSnbt(SNBTFormat $format = SNBTFormat::Compact, bool $escapeControlCharacters = false): string {
+		return $this->render($format, 0, $escapeControlCharacters);
 	}
 
 	/**
 	 * Render this tag at the given nesting depth. Containers thread the depth
 	 * through their children so Pretty formatting can indent correctly.
 	 */
-	abstract protected function render(SNBTFormat $format, int $depth): string;
+	abstract protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string;
 
 	/**
-	 * Quote a string for SNBT output, escaping only the backslash and the double
-	 * quote. Control characters stay raw: every Minecraft version reads them
-	 * inside quotes, but versions before 1.21.5 reject escapes such as \n.
+	 * Quote a string for SNBT output. The backslash and the double quote are
+	 * always escaped. Control characters stay raw unless $escapeControlCharacters
+	 * is set.
 	 */
-	protected static function quote(string $value): string {
-		return '"' . str_replace(["\\", '"'], ['\\\\', '\\"'], $value) . '"';
+	protected static function quote(string $value, bool $escapeControlCharacters): string {
+		$escapes = ["\\" => "\\\\", '"' => "\\\""];
+
+		if ($escapeControlCharacters) {
+			$escapes += self::controlCharacterEscapes();
+		}
+
+		return '"' . strtr($value, $escapes) . '"';
+	}
+
+	/**
+	 * The escapes that 1.21.5 and later write for control characters: \n, \r
+	 * and \t, and a two-digit hex escape for the rest of U+0000-U+001F and U+007F.
+	 *
+	 * @return array<string, string>
+	 */
+	protected static function controlCharacterEscapes(): array {
+		$escapes = [];
+
+		foreach ([...range(0x00, 0x1F), 0x7F] as $code) {
+			$escapes[chr($code)] = sprintf("\\x%02x", $code);
+		}
+
+		return array_replace($escapes, ["\n" => "\\n", "\r" => "\\r", "\t" => "\\t"]);
 	}
 }

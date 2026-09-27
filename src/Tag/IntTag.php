@@ -9,7 +9,7 @@ class IntTag extends IntegerTag {
 
 	public const MAX = 2_147_483_647;
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		return (string) $this->value;
 	}
 }

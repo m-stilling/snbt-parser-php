@@ -9,7 +9,7 @@ class ShortTag extends IntegerTag {
 
 	public const MAX = 32_767;
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		return $this->value . "s";
 	}
 }

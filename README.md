@@ -290,7 +290,7 @@ The parser writes each code point to the result as UTF-8. A `\u` high surrogate 
 
 `\N{...}` needs the `intl` extension. Without it, `\N{...}` causes `SNBTParseException`.
 
-`toSnbt()` escapes only `\` and `"`. It writes all other characters unchanged, and this includes line breaks and other control characters. All Minecraft versions read this output:
+By default, `toSnbt()` escapes only `\` and `"`. It writes all other characters unchanged, and this includes line breaks and other control characters. All Minecraft versions read this output:
 
 ```php
 use Stilling\SNBTParser\Tag\StringTag;
@@ -302,7 +302,18 @@ use Stilling\SNBTParser\Tag\StringTag;
 b"
 ```
 
-A string with a line break gives output on more than one line. You cannot use this output in a `.mcfunction` file, because each command in that file must be on one line.
+A string with a line break gives output on more than one line. A `.mcfunction` file needs each command on one line. For output on one line, set `escapeControlCharacters`:
+
+```php
+(new StringTag("a\nb"))->toSnbt(escapeControlCharacters: true);
+// "a\nb"
+
+$tag->toSnbt(SNBTFormat::Spaced, escapeControlCharacters: true);
+```
+
+`toSnbt()` then writes a line feed as `\n`, a carriage return as `\r` and a tab as `\t`. It writes the other control characters (U+0000 to U+001F, and U+007F) as `\x` with 2 hex digits, for example `\x01`. This applies to strings and to quoted keys. Minecraft 1.21.5 and later read these escapes. Minecraft 1.21.4 and earlier reject them.
+
+`SNBTFormat::Pretty` writes compounds and lists on more than one line also with `escapeControlCharacters`. Use `Compact` or `Spaced` for output on one line.
 
 ### Operations
 

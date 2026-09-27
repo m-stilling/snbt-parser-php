@@ -1,7 +1,11 @@
 <?php
 
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
+use Stilling\SNBTParser\SNBTFormat;
 use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\ByteTag;
+use Stilling\SNBTParser\Tag\CompoundTag;
+use Stilling\SNBTParser\Tag\ListTag;
 use Stilling\SNBTParser\Tag\StringTag;
 
 test("decodes the character escapes", function () {
@@ -70,4 +74,33 @@ test("reads the strings that a 1.21.5 server writes", function () {
 		->and(SNBTParser::parse('"a\tb"'))->toBe("a\tb")
 		->and(SNBTParser::parse('"a\x01b"'))->toBe("a\x01b")
 		->and(SNBTParser::parse("'a\\\\b\"c\\'d'"))->toBe("a\\b\"c'd");
+});
+
+test("escapeControlCharacters writes the escapes that 1.21.5 writes", function () {
+	$tag = new StringTag("a\nb\rc\td\x01e\x1ff\x7fg");
+
+	expect($tag->toSnbt(escapeControlCharacters: true))->toBe('"a\nb\rc\td\x01e\x1ff\x7fg"')
+		->and($tag->toSnbt())->toBe("\"a\nb\rc\td\x01e\x1ff\x7fg\"");
+});
+
+test("escapeControlCharacters keeps the backslash, the quote and UTF-8 as before", function () {
+	expect((new StringTag("a\\b\"c é😀"))->toSnbt(escapeControlCharacters: true))->toBe('"a\\\\b\"c é😀"')
+		->and((new StringTag('\n'))->toSnbt(escapeControlCharacters: true))->toBe('"\\\\n"');
+});
+
+test("escapeControlCharacters output parses back to the same string", function () {
+	$value = implode("", array_map("chr", [ ...range(0x00, 0x1F), 0x7F ])) . "\\\"'x";
+
+	$snbt = (new StringTag($value))->toSnbt(escapeControlCharacters: true);
+
+	expect($snbt)->not->toMatch('/[\x00-\x1F\x7F]/')
+		->and(SNBTParser::parse($snbt))->toBe($value);
+});
+
+test("escapeControlCharacters applies to nested strings and keys in every format", function () {
+	$tag = new CompoundTag([ "a\nb" => new ListTag([ new StringTag("c\nd") ]), "e" => new ByteTag(1) ]);
+
+	expect($tag->toSnbt(escapeControlCharacters: true))->toBe('{"a\nb":["c\nd"],e:1b}')
+		->and($tag->toSnbt(SNBTFormat::Spaced, escapeControlCharacters: true))->toBe('{ "a\nb": [ "c\nd" ], e: 1b }')
+		->and($tag->toSnbt(SNBTFormat::Pretty, true))->toContain('"a\nb"')->toContain('"c\nd"');
 });

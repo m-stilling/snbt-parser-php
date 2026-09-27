@@ -12,7 +12,7 @@ class StringTag extends Tag {
 		return $this->value;
 	}
 
-	protected function render(SNBTFormat $format, int $depth): string {
-		return self::quote($this->value);
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
+		return self::quote($this->value, $escapeControlCharacters);
 	}
 }

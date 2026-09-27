@@ -142,7 +142,7 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 		return $result;
 	}
 
-	protected function render(SNBTFormat $format, int $depth): string {
+	protected function render(SNBTFormat $format, int $depth, bool $escapeControlCharacters): string {
 		if ($this->entries === []) {
 			return "{}";
 		}
@@ -150,7 +150,7 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 		$parts = [];
 
 		foreach ($this->entries as $key => $tag) {
-			$parts[] = $this->serializeKey((string) $key) . $format->keyValueSeparator() . $tag->render($format, $depth + 1);
+			$parts[] = $this->serializeKey((string) $key, $escapeControlCharacters) . $format->keyValueSeparator() . $tag->render($format, $depth + 1, $escapeControlCharacters);
 		}
 
 		return "{" . $format->afterOpen($depth)
@@ -158,11 +158,11 @@ class CompoundTag extends Tag implements \Countable, \IteratorAggregate {
 			. $format->beforeClose($depth) . "}";
 	}
 
-	protected function serializeKey(string $key): string {
+	protected function serializeKey(string $key, bool $escapeControlCharacters): string {
 		if ($key !== "" && preg_match('/^[A-Za-z0-9_.+-]+$/', $key) === 1) {
 			return $key;
 		}
 
-		return self::quote($key);
+		return self::quote($key, $escapeControlCharacters);
 	}
 }
