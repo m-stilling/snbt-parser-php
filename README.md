@@ -283,7 +283,19 @@ The parser writes each code point to the result as UTF-8. A `\u` high surrogate 
 
 `\N{...}` needs the `intl` extension. Without it, `\N{...}` causes `SNBTParseException`.
 
-`toSnbt()` writes only the escapes `\\` and `\"`. It writes control characters such as a line break unchanged, because Minecraft versions before 1.21.5 do not read `\n` but do read a raw line break. A string with a line break therefore spans more than one line of output, so it does not fit on one line of a `.mcfunction` file.
+`toSnbt()` escapes only `\` and `"`. It writes all other characters unchanged, and this includes line breaks and other control characters. All Minecraft versions read this output:
+
+```php
+use Stilling\SNBTParser\Tag\StringTag;
+
+(new StringTag("a\nb"))->toSnbt();
+
+// returns ->
+"a
+b"
+```
+
+A string with a line break gives output on more than one line. You cannot use this output in a `.mcfunction` file, because each command in that file must be on one line.
 
 ### Operations
 
