@@ -275,11 +275,11 @@ A quoted string can contain these escapes:
 | `\"` and `\'` | the quote, in either kind of string |
 | `\b`, `\f`, `\n`, `\r`, `\s`, `\t` | backspace, form feed, line feed, carriage return, space, tab |
 | `\x41` | the code point with 2 hex digits |
-| `A` | the code point with 4 hex digits |
+| `\u0041` | the code point with 4 hex digits |
 | `\U0001F600` | the code point with 8 hex digits |
 | `\N{Snowman}` | the Unicode character with that name |
 
-The parser writes each code point to the result as UTF-8. A `\u` high surrogate followed by a `\u` low surrogate gives one character, for example `😀` gives 😀. An unpaired surrogate causes `SNBTParseException`.
+The parser writes each code point to the result as UTF-8. A `\u` high surrogate followed by a `\u` low surrogate gives one character, for example `\uD83D\uDE00` gives 😀. An unpaired surrogate causes `SNBTParseException`.
 
 `\N{...}` needs the `intl` extension. Without it, `\N{...}` causes `SNBTParseException`.
 
