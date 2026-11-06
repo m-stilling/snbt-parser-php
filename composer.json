@@ -21,7 +21,7 @@
 		"ext-intl": "Needed to parse the \\N{name} string escape"
 	},
 	"require-dev": {
-		"pestphp/pest": "^4.0",
+		"pestphp/pest": "^4.0 || ^5.0",
 		"phpstan/phpstan": "^2.0"
 	},
 	"autoload": {
