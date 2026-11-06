@@ -14,7 +14,10 @@ abstract class FloatingPointTag extends Tag {
 	 */
 	public function __construct(public readonly float $value) {
 		if (!is_finite($value)) {
-			throw new SNBTInvalidArgumentException("SNBT cannot represent the non-finite value {$value}.");
+			// PHP 8.5 warns when NAN is cast to a string, so name the value instead.
+			$name = is_nan($value) ? "NAN" : ($value > 0 ? "INF" : "-INF");
+
+			throw new SNBTInvalidArgumentException("SNBT cannot represent the non-finite value {$name}.");
 		}
 	}
 
