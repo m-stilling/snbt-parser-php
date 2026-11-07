@@ -2,6 +2,7 @@
 
 namespace Stilling\SNBTParser\Tag;
 
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\SNBTFormat;
 
@@ -66,6 +67,17 @@ class ListTag extends Tag implements \Countable, \IteratorAggregate {
 	 */
 	public function getFloat(int $index): float {
 		return $this->getAs($index, FloatingPointTag::class)->value;
+	}
+
+	/**
+	 * Reads a UUID that Minecraft stores as an int array of four values, such
+	 * as `[I; 110787060, 1156138790, -1514210135, 238594805]`.
+	 *
+	 * @throws SNBTTagException when the index is missing or holds another tag type
+	 * @throws SNBTInvalidArgumentException when the array does not hold four integers
+	 */
+	public function getUuid(int $index): string {
+		return $this->getAs($index, IntArrayTag::class)->toUuid();
 	}
 
 	/**

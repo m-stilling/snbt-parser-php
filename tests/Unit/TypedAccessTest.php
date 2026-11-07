@@ -1,6 +1,7 @@
 <?php
 
 use Stilling\SNBTParser\Exceptions\SNBTException;
+use Stilling\SNBTParser\Exceptions\SNBTInvalidArgumentException;
 use Stilling\SNBTParser\Exceptions\SNBTParseException;
 use Stilling\SNBTParser\Exceptions\SNBTTagException;
 use Stilling\SNBTParser\SNBTParser;
@@ -45,7 +46,8 @@ test("reads typed values from a compound", function () {
 		->and($tag->getList("pos"))->toBeInstanceOf(ListTag::class)
 		->and($tag->getCompound("nested")->getInt("a"))->toBe(1)
 		->and($tag->getAs("slot", ByteTag::class)->value)->toBe(3)
-		->and($tag->getAs("UUID", IntArrayTag::class)->toUuid())->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5");
+		->and($tag->getAs("UUID", IntArrayTag::class)->toUuid())->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5")
+		->and($tag->getUuid("UUID"))->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5");
 });
 
 test("compound getters throw on a missing key or a wrong type", function () {
@@ -58,6 +60,26 @@ test("compound getters throw on a missing key or a wrong type", function () {
 		->and(fn () => $tag->getBool("xp"))->toThrow(SNBTTagException::class, 'Expected BooleanTag or ByteTag at key "xp", found IntTag.')
 		->and(fn () => $tag->getCompound("name"))->toThrow(SNBTTagException::class)
 		->and(SNBTTagException::missing("x"))->toBeInstanceOf(SNBTException::class);
+});
+
+test("getUuid() throws on a missing key, a wrong type or a wrong length", function () {
+	$tag = SNBTParser::parseCompound('{ name: "Steve", short: [I; 1, 2, 3], longs: [L; 1l, 2l, 3l, 4l] }');
+
+	expect(fn () => $tag->getUuid("missing"))->toThrow(SNBTTagException::class, 'No tag at key "missing".')
+		->and(fn () => $tag->getUuid("name"))->toThrow(SNBTTagException::class, 'Expected IntArrayTag at key "name", found StringTag.')
+		->and(fn () => $tag->getUuid("longs"))->toThrow(SNBTTagException::class)
+		->and(fn () => $tag->getUuid("short"))->toThrow(SNBTInvalidArgumentException::class);
+});
+
+test("reads a UUID from a list", function () {
+	$list = SNBTParser::parseTyped('[[I; 110787060, 1156138790, -1514210135, 238594805], "x"]');
+
+	if (!$list instanceof ListTag) {
+		throw new RuntimeException("Expected a ListTag.");
+	}
+
+	expect($list->getUuid(0))->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5")
+		->and(fn () => $list->getUuid(1))->toThrow(SNBTTagException::class, "Expected IntArrayTag at index 1, found StringTag.");
 });
 
 test("reads typed values from a list", function () {

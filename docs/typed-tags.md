@@ -78,18 +78,18 @@ A `CompoundTag` iteration gives string keys. `entries` and `toPhp()` can have `i
 | `getBool()` | `bool` | `BooleanTag`, and `ByteTag` (non-zero is `true`) |
 | `getCompound()` | `CompoundTag` | `CompoundTag` |
 | `getList()` | `ListTag` | `ListTag` |
+| `getUuid()` | `string`, for example `"069a79f4-44e9-4726-a5be-fca90e38aaf5"` | `IntArrayTag` with four values |
 | `getAs($key, $class)` | an instance of `$class` | `$class` and its subclasses |
 
 ```php
 use Stilling\SNBTParser\SNBTParser;
-use Stilling\SNBTParser\Tag\IntArrayTag;
 
 $player = SNBTParser::parseCompound('{Health: 20.0f, OnGround: 1b, Pos: [-78.5d, 65.0d, -19.5d], UUID: [I; 110787060, 1156138790, -1514210135, 238594805]}');
 
-$player->getFloat("Health");                          // 20.0
-$player->getBool("OnGround");                         // true
-$player->getList("Pos")->getFloat(1);                 // 65.0
-$player->getAs("UUID", IntArrayTag::class)->toUuid(); // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+$player->getFloat("Health");          // 20.0
+$player->getBool("OnGround");         // true
+$player->getList("Pos")->getFloat(1); // 65.0
+$player->getUuid("UUID");             // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
 $player->getInt("Health"); // throws SNBTTagException: Expected IntegerTag at key "Health", found FloatTag.
 ```
@@ -155,12 +155,11 @@ Minecraft stores a UUID as an array of four integers, for example `UUID: [I; 110
 ```php
 use Stilling\SNBTParser\SNBTFormat;
 use Stilling\SNBTParser\SNBTParser;
-use Stilling\SNBTParser\Tag\IntArrayTag;
 
 SNBTParser::intsToUuid([110787060, 1156138790, -1514210135, 238594805]);
 // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
-$tag->getAs("UUID", IntArrayTag::class)->toUuid();
+$player->getUuid("UUID");
 // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
 SNBTParser::uuidToInts("069a79f4-44e9-4726-a5be-fca90e38aaf5");
@@ -176,5 +175,6 @@ SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Space
 Details:
 
 - `uuidToInts()` and `uuidToSnbt()` accept the hyphenated form or 32 hex digits, in uppercase or lowercase.
-- These methods throw `SNBTInvalidArgumentException` when the input is not correct: `intsToUuid()` and `toUuid()` for an array that does not hold four integers, and `uuidToInts()` and `uuidToSnbt()` for a string that is not a UUID.
+- `getUuid()` on a `CompoundTag` or a `ListTag` reads an `IntArrayTag` and returns its UUID. `IntArrayTag::toUuid()` does the same for a tag that you already have.
+- These methods throw `SNBTInvalidArgumentException` when the input is not correct: `intsToUuid()`, `getUuid()` and `toUuid()` for an array that does not hold four integers, and `uuidToInts()` and `uuidToSnbt()` for a string that is not a UUID.
 - The SNBT operation `uuid("...")` also gives an `IntArrayTag`. Refer to [Operations](syntax.md#operations).
