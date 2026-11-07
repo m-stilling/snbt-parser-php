@@ -110,6 +110,6 @@ class SNBTParser {
 	 * `[I;110787060,1156138790,-1514210135,238594805]`.
 	 */
 	public static function uuidToSnbt(string $uuid, SNBTFormat $format = SNBTFormat::Compact): string {
-		return (new IntArrayTag(self::uuidToInts($uuid)))->toSnbt($format);
+		return IntArrayTag::fromUuid($uuid)->toSnbt($format);
 	}
 }

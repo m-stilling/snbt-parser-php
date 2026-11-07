@@ -148,6 +148,8 @@ $item->with("Slot", new ByteTag(4))->without("count")->toSnbt();
 // '{Slot:4b,id:"minecraft:shield"}'
 ```
 
+To set a UUID, use `IntArrayTag::fromUuid()`. Refer to [UUIDs](#uuids).
+
 ## UUIDs
 
 Minecraft stores a UUID as an array of four integers, for example `UUID: [I; 110787060, 1156138790, -1514210135, 238594805]`. These methods convert between that array and the UUID string:
@@ -155,12 +157,16 @@ Minecraft stores a UUID as an array of four integers, for example `UUID: [I; 110
 ```php
 use Stilling\SNBTParser\SNBTFormat;
 use Stilling\SNBTParser\SNBTParser;
+use Stilling\SNBTParser\Tag\IntArrayTag;
 
 SNBTParser::intsToUuid([110787060, 1156138790, -1514210135, 238594805]);
 // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
 
 $player->getUuid("UUID");
 // "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+
+$player->with("UUID", IntArrayTag::fromUuid("853c80ef-3c37-49fd-aa49-938b674adae6"));
+// a copy where UUID is [I; -2059632401, 1010256381, -1438018677, 1732958950]
 
 SNBTParser::uuidToInts("069a79f4-44e9-4726-a5be-fca90e38aaf5");
 // [110787060, 1156138790, -1514210135, 238594805]
@@ -174,7 +180,8 @@ SNBTParser::uuidToSnbt("069a79f4-44e9-4726-a5be-fca90e38aaf5", SNBTFormat::Space
 
 Details:
 
-- `uuidToInts()` and `uuidToSnbt()` accept the hyphenated form or 32 hex digits, in uppercase or lowercase.
+- `uuidToInts()`, `uuidToSnbt()` and `IntArrayTag::fromUuid()` accept the hyphenated form or 32 hex digits, in uppercase or lowercase.
 - `getUuid()` on a `CompoundTag` or a `ListTag` reads an `IntArrayTag` and returns its UUID. `IntArrayTag::toUuid()` does the same for a tag that you already have.
-- These methods throw `SNBTInvalidArgumentException` when the input is not correct: `intsToUuid()`, `getUuid()` and `toUuid()` for an array that does not hold four integers, and `uuidToInts()` and `uuidToSnbt()` for a string that is not a UUID.
+- `IntArrayTag::fromUuid()` makes the `IntArrayTag` for a UUID string. Give it to `with()`, `withAppended()` or a constructor to write the UUID.
+- These methods throw `SNBTInvalidArgumentException` when the input is not correct: `intsToUuid()`, `getUuid()` and `toUuid()` for an array that does not hold four integers, and `uuidToInts()`, `uuidToSnbt()` and `fromUuid()` for a string that is not a UUID.
 - The SNBT operation `uuid("...")` also gives an `IntArrayTag`. Refer to [Operations](syntax.md#operations).

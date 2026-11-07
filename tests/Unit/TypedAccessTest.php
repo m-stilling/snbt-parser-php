@@ -82,6 +82,25 @@ test("reads a UUID from a list", function () {
 		->and(fn () => $list->getUuid(1))->toThrow(SNBTTagException::class, "Expected IntArrayTag at index 1, found StringTag.");
 });
 
+test("fromUuid() builds the int array for a UUID", function () {
+	$tag = IntArrayTag::fromUuid("069a79f4-44e9-4726-a5be-fca90e38aaf5");
+
+	expect($tag->values)->toBe([110787060, 1156138790, -1514210135, 238594805])
+		->and($tag->toUuid())->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5")
+		->and(IntArrayTag::fromUuid("069A79F444E94726A5BEFCA90E38AAF5")->values)->toBe($tag->values)
+		->and(fn () => IntArrayTag::fromUuid("not-a-uuid"))->toThrow(SNBTInvalidArgumentException::class);
+});
+
+test("fromUuid() writes a UUID into a compound and a list", function () {
+	$player = SNBTParser::parseCompound('{ name: "Steve" }')
+		->with("UUID", IntArrayTag::fromUuid("069a79f4-44e9-4726-a5be-fca90e38aaf5"));
+	$list = (new ListTag([]))->withAppended(IntArrayTag::fromUuid("069a79f4-44e9-4726-a5be-fca90e38aaf5"));
+
+	expect($player->getUuid("UUID"))->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5")
+		->and($player->toSnbt())->toBe('{name:"Steve",UUID:[I;110787060,1156138790,-1514210135,238594805]}')
+		->and($list->getUuid(0))->toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5");
+});
+
 test("reads typed values from a list", function () {
 	$list = SNBTParser::parseTyped('[1.5d, "x", 7s, 1b, { a: 1 }, [2]]');
 	expect($list)->toBeInstanceOf(ListTag::class);
