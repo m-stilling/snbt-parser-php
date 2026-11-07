@@ -1,8 +1,8 @@
-# SNBT Parser
+# SNBT Parser for PHP
 
 [![tests](https://github.com/m-stilling/snbt-parser-php/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/m-stilling/snbt-parser-php/actions/workflows/tests.yml) [![Packagist Version](https://img.shields.io/packagist/v/stilling/snbt-parser)](https://packagist.org/packages/stilling/snbt-parser)
 
-Read [Minecraft SNBT](https://minecraft.wiki/w/NBT_format#SNBT_format) into PHP values or typed tags, change it, and write it back to SNBT.
+Read [Minecraft SNBT](https://minecraft.wiki/w/NBT_format#SNBT_format) (stringified NBT) into PHP values or typed tags, change it, and write it back to SNBT. The parser reads the NBT data that commands such as `data get` return, and the SNBT syntax that Java Edition 1.21.5 added.
 
 ```
 composer require stilling/snbt-parser
